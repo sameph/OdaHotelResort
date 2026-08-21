@@ -144,6 +144,29 @@ export interface JournalInsert {
   slug?: string | null;
 }
 
+export interface ContactRow {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  enquiry_type: string;
+  message: string;
+  status: "read" | "unread" | "responded";
+  created_at?: string;
+}
+
+export interface ContactInsert {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  enquiry_type: string;
+  message: string;
+  status?: "read" | "unread" | "responded";
+}
+
+
 export interface RoomInsert {
   number: string;
   type: string;
@@ -195,6 +218,11 @@ export interface Database {
         Row: JournalRow;
         Insert: JournalInsert;
         Update: Partial<JournalInsert>;
+      };
+      contacts: {
+        Row: ContactRow;
+        Insert: ContactInsert;
+        Update: Partial<ContactInsert>;
       };
     };
     Views: Record<string, never>;

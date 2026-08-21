@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { insertContact } from "@/lib/supabase-service";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PageHero } from "@/components/page-hero";
@@ -28,6 +30,30 @@ export const Route = createFileRoute("/contact")({
 
 function ContactPage() {
   const [sent, setSent] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    enquiry_type: "Reservation",
+    message: ""
+  });
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const contactMutation = useMutation({
+    mutationFn: insertContact,
+    onSuccess: () => setSent(true),
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (contactMutation.status === "pending") return;
+    contactMutation.mutate(formData);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -108,10 +134,7 @@ function ContactPage() {
 
             <Reveal delay={100}>
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSent(true);
-                }}
+                onSubmit={handleSubmit}
                 className="bg-background border border-border p-8 md:p-10 shadow-soft"
               >
                 <h3 className="font-serif text-2xl text-forest-deep">Send us a message</h3>
@@ -119,18 +142,23 @@ function ContactPage() {
                   We'll respond within one business day.
                 </p>
                 <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                  <Field label="First name" required />
-                  <Field label="Last name" required />
-                  <Field label="Email" type="email" required />
-                  <Field label="Phone" type="tel" />
+                  <Field label="First name" name="firstName" value={formData.firstName} onChange={handleChange} required />
+                  <Field label="Last name" name="lastName" value={formData.lastName} onChange={handleChange} required />
+                  <Field label="Email" type="email" name="email" value={formData.email} onChange={handleChange} required />
+                  <Field label="Phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} />
                   <div className="sm:col-span-2">
                     <label className="block text-xs uppercase tracking-[0.25em] text-muted-foreground">
                       Enquiry type
                     </label>
-                    <select className="mt-2 w-full border border-input bg-background px-3 py-3 text-sm focus:outline-none focus:border-gold">
+                    <select 
+                      name="enquiry_type"
+                      value={formData.enquiry_type}
+                      onChange={handleChange}
+                      className="mt-2 w-full border border-input bg-background px-3 py-3 text-sm focus:outline-none focus:border-gold"
+                    >
                       {["Reservation", "Event enquiry", "Spa booking", "Press", "Other"].map(
                         (o) => (
-                          <option key={o}>{o}</option>
+                          <option key={o} value={o}>{o}</option>
                         ),
                       )}
                     </select>
@@ -142,16 +170,25 @@ function ContactPage() {
                     <textarea
                       rows={5}
                       required
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
                       className="mt-2 w-full border border-input bg-background px-3 py-3 text-sm focus:outline-none focus:border-gold resize-none"
                     />
                   </div>
                 </div>
+                {contactMutation.error && (
+                  <p className="mt-4 text-sm text-destructive">{contactMutation.error.message}</p>
+                )}
                 <button
                   type="submit"
-                  className="btn-shine mt-8 inline-flex items-center gap-2 bg-forest-deep text-white px-8 py-3.5 text-xs uppercase tracking-[0.25em] font-semibold hover:bg-gold hover:text-gold-foreground transition-colors"
+                  disabled={contactMutation.status === "pending" || sent}
+                  className="btn-shine mt-8 inline-flex items-center gap-2 bg-forest-deep text-white px-8 py-3.5 text-xs uppercase tracking-[0.25em] font-semibold hover:bg-gold hover:text-gold-foreground transition-colors disabled:opacity-50"
                 >
                   {sent ? (
                     "Message sent"
+                  ) : contactMutation.status === "pending" ? (
+                    "Sending..."
                   ) : (
                     <>
                       Send message <Send className="h-4 w-4" />
@@ -177,10 +214,16 @@ function Field({
   label,
   type = "text",
   required = false,
+  name,
+  value,
+  onChange,
 }: {
   label: string;
   type?: string;
   required?: boolean;
+  name: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <label className="block">
@@ -191,6 +234,9 @@ function Field({
       <input
         type={type}
         required={required}
+        name={name}
+        value={value}
+        onChange={onChange}
         className="mt-2 w-full border border-input bg-background px-3 py-3 text-sm focus:outline-none focus:border-gold"
       />
     </label>

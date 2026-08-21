@@ -11,6 +11,8 @@ import type {
   OfferInsert,
   JournalRow,
   JournalInsert,
+  ContactInsert,
+  ContactRow,
 } from "./supabase-types";
 
 export async function uploadImage(file: File, bucket: string, folder: string): Promise<string> {
@@ -382,3 +384,47 @@ export async function deleteJournalPost(id: number): Promise<void> {
   const { error } = await ensureSupabase().from("journal_posts").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+// --- Contacts ---
+
+export async function fetchContacts(): Promise<ContactRow[]> {
+  const supabase = ensureSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("contacts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      if (typeof error.message === "string" && error.message.includes("Could not find the table")) {
+        return [];
+      }
+      throw error;
+    }
+    return data ?? [];
+  } catch (e: any) {
+    return [];
+  }
+}
+
+export async function insertContact(payload: ContactInsert): Promise<ContactRow> {
+  const { data, error } = await ensureSupabase()
+    .from("contacts")
+    .insert(payload as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as ContactRow;
+}
+
+export async function updateContactStatus(id: number, status: string): Promise<ContactRow> {
+  const { data, error } = await ensureSupabase()
+    .from("contacts")
+    .update({ status } as never)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as ContactRow;
+}
+

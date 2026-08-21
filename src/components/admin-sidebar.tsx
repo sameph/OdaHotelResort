@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarCheck, BedDouble, Users, BarChart3, Home, LogOut, Image as ImageIcon, Tag } from "lucide-react";
+import { LayoutDashboard, CalendarCheck, BedDouble, Users, BarChart3, Home, LogOut, Image as ImageIcon, Tag, MessageSquare } from "lucide-react";
 import { ensureSupabase } from "@/lib/supabase";
 
 const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
@@ -8,6 +8,7 @@ const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: 
   { to: "/admin/rooms", label: "Rooms", icon: BedDouble },
   { to: "/admin/guests", label: "Guests", icon: Users },
   { to: "/admin/offers", label: "Offers", icon: Tag },
+  { to: "/admin/contacts", label: "Messages", icon: MessageSquare },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/gallery", label: "Gallery", icon: ImageIcon },
 ];
