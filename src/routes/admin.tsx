@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { AdminLogin } from "@/components/admin-login";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -20,8 +21,20 @@ function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-md border-b border-border">
           <div className="flex items-center justify-between gap-4 px-6 md:px-10 py-4">
-            <div className="flex items-center gap-3 flex-1 max-w-md">
-              <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <div className="flex items-center gap-2 md:gap-3 flex-1 max-w-md">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="lg:hidden relative rounded-md p-2 -ml-2 hover:bg-muted transition-colors text-foreground" aria-label="Menu">
+                    <Menu className="h-5 w-5" aria-hidden />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-64 border-r-0 bg-forest-deep text-white">
+                  <SheetTitle className="sr-only">Admin Navigation</SheetTitle>
+                  <SheetDescription className="sr-only">Navigate through the admin console</SheetDescription>
+                  <AdminSidebar className="flex flex-col w-64 shrink-0 h-full" />
+                </SheetContent>
+              </Sheet>
+              <Search className="h-4 w-4 text-muted-foreground hidden sm:block" aria-hidden />
               <input
                 type="search"
                 placeholder="Search bookings, guests, rooms…"

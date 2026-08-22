@@ -13,10 +13,10 @@ const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: 
   { to: "/admin/gallery", label: "Gallery", icon: ImageIcon },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ className }: { className?: string }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-forest-deep text-white sticky top-0 h-screen">
+    <aside className={className || "hidden lg:flex flex-col w-64 shrink-0 bg-forest-deep text-white sticky top-0 h-screen"}>
       <div className="px-6 py-6 border-b border-white/10">
         <Link to="/" className="flex items-center gap-3 font-serif">
           <span className="grid place-items-center h-10 w-10 rounded-full border-2 border-gold text-gold italic text-lg">O</span>

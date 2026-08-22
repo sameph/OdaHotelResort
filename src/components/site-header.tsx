@@ -116,7 +116,7 @@ export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
           </div>
           <button
             type="button"
-            className={solid ? "text-foreground" : "text-white"}
+            className={`p-2 -mr-2 ${solid ? "text-foreground" : "text-white"}`}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
