@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, UploadCloud, X, Box } from "lucide-react";
+import { useAdminRole } from "./admin";
 import {
   fetchOffers,
   createOffer,
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/admin/offers")({
 });
 
 function OffersAdminPage() {
+  const role = useAdminRole();
+  if (role === "receptionist") {
+    return <div className="p-16 text-center text-muted-foreground">Unauthorized access. Only administrators can manage Offers.</div>;
+  }
+
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingOfferId, setEditingOfferId] = useState<number | null>(null);

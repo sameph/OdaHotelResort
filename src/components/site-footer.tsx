@@ -1,5 +1,6 @@
 import { Facebook, Instagram, Youtube, Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useLang } from "@/lib/i18n";
 
 const explore = [
   { label: "Rooms & Suites", to: "/rooms" as const },
@@ -16,6 +17,7 @@ const company = [
 ];
 
 export function SiteFooter() {
+  const { t } = useLang();
   return (
     <footer className="bg-forest-deep text-white/85">
       <div className="container-luxury py-16 md:py-20 grid gap-12 md:grid-cols-2 lg:grid-cols-4">
@@ -32,8 +34,7 @@ export function SiteFooter() {
             </span>
           </Link>
           <p className="mt-6 text-sm leading-relaxed text-white/70 max-w-xs">
-            A five-star sanctuary in Adama, Ethiopia — where warm hospitality meets timeless design
-            and the rhythm of the highlands.
+            {t("footer.description")}
           </p>
           <div className="mt-6 flex gap-3">
             {[Facebook, Instagram, Youtube].map((Icon, i) => (
@@ -50,7 +51,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">Explore</h3>
+          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">{t("footer.explore")}</h3>
           <ul className="mt-6 space-y-3 text-sm">
             {explore.map((l) => (
               <li key={l.label}>
@@ -63,7 +64,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">Company</h3>
+          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">{t("footer.company")}</h3>
           <ul className="mt-6 space-y-3 text-sm">
             {company.map((l) => (
               <li key={l.label}>
@@ -83,7 +84,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">Contact</h3>
+          <h3 className="text-sm uppercase tracking-[0.2em] text-gold gold-underline">{t("footer.contact")}</h3>
           <ul className="mt-6 space-y-4 text-sm">
             <li className="flex gap-3">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-gold" aria-hidden />
@@ -115,7 +116,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="container-luxury py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/55">
-          <p>© {new Date().getFullYear()} ODA Resort Hotel. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ODA Resort Hotel. {t("footer.rights")}</p>
           <p className="tracking-[0.2em] uppercase">Adama · Ethiopia</p>
         </div>
       </div>

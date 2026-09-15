@@ -5,12 +5,18 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAnalyticsData } from "@/lib/supabase-service";
+import { useAdminRole } from "./admin";
 
 export const Route = createFileRoute("/admin/analytics")({
   component: AnalyticsPage,
 });
 
 function AnalyticsPage() {
+  const role = useAdminRole();
+  if (role === "receptionist") {
+    return <div className="p-16 text-center text-muted-foreground">Unauthorized access. Only administrators can view Analytics.</div>;
+  }
+
   const { data: analytics } = useQuery({
     queryKey: ["analytics"],
     queryFn: fetchAnalyticsData,

@@ -18,6 +18,7 @@ import { Route as DiningRouteImport } from './routes/dining'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as OffersRouteImport } from './routes/offers'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RoomsRouteImport } from './routes/rooms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
@@ -25,8 +26,11 @@ import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminGuestsRouteImport } from './routes/admin.guests'
+import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminOffersRouteImport } from './routes/admin.offers'
 import { Route as AdminRoomsRouteImport } from './routes/admin.rooms'
+import { Route as ApiBookingsSendConfirmationRouteImport } from './routes/api.bookings.send-confirmation'
+import { Route as ApiStaffInviteRouteImport } from './routes/api.staff.invite'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -73,6 +77,11 @@ const OffersRoute = OffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoomsRoute = RoomsRouteImport.update({
   id: '/rooms',
   path: '/rooms',
@@ -108,6 +117,11 @@ const AdminGuestsRoute = AdminGuestsRouteImport.update({
   path: '/guests',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLogsRoute = AdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOffersRoute = AdminOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
@@ -117,6 +131,17 @@ const AdminRoomsRoute = AdminRoomsRouteImport.update({
   id: '/rooms',
   path: '/rooms',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiBookingsSendConfirmationRoute =
+  ApiBookingsSendConfirmationRouteImport.update({
+    id: '/api/bookings/send-confirmation',
+    path: '/api/bookings/send-confirmation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiStaffInviteRoute = ApiStaffInviteRouteImport.update({
+  id: '/api/staff/invite',
+  path: '/api/staff/invite',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -129,15 +154,19 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
   '/offers': typeof OffersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rooms': typeof RoomsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/logs': typeof AdminLogsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/bookings/send-confirmation': typeof ApiBookingsSendConfirmationRoute
+  '/api/staff/invite': typeof ApiStaffInviteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,15 +177,19 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
   '/offers': typeof OffersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rooms': typeof RoomsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/logs': typeof AdminLogsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin': typeof AdminIndexRoute
+  '/api/bookings/send-confirmation': typeof ApiBookingsSendConfirmationRoute
+  '/api/staff/invite': typeof ApiStaffInviteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,15 +202,19 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
   '/offers': typeof OffersRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rooms': typeof RoomsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/logs': typeof AdminLogsRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/bookings/send-confirmation': typeof ApiBookingsSendConfirmationRoute
+  '/api/staff/invite': typeof ApiStaffInviteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,15 +228,19 @@ export interface FileRouteTypes {
     | '/events'
     | '/gallery'
     | '/offers'
+    | '/reset-password'
     | '/rooms'
     | '/admin/analytics'
     | '/admin/bookings'
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/logs'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin/'
+    | '/api/bookings/send-confirmation'
+    | '/api/staff/invite'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,15 +251,19 @@ export interface FileRouteTypes {
     | '/events'
     | '/gallery'
     | '/offers'
+    | '/reset-password'
     | '/rooms'
     | '/admin/analytics'
     | '/admin/bookings'
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/logs'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin'
+    | '/api/bookings/send-confirmation'
+    | '/api/staff/invite'
   id:
     | '__root__'
     | '/'
@@ -230,15 +275,19 @@ export interface FileRouteTypes {
     | '/events'
     | '/gallery'
     | '/offers'
+    | '/reset-password'
     | '/rooms'
     | '/admin/analytics'
     | '/admin/bookings'
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/logs'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin/'
+    | '/api/bookings/send-confirmation'
+    | '/api/staff/invite'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,7 +300,10 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   GalleryRoute: typeof GalleryRoute
   OffersRoute: typeof OffersRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   RoomsRoute: typeof RoomsRoute
+  ApiBookingsSendConfirmationRoute: typeof ApiBookingsSendConfirmationRoute
+  ApiStaffInviteRoute: typeof ApiStaffInviteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -319,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rooms': {
       id: '/rooms'
       path: '/rooms'
@@ -368,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGuestsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/offers': {
       id: '/admin/offers'
       path: '/offers'
@@ -382,6 +448,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRoomsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/bookings/send-confirmation': {
+      id: '/api/bookings/send-confirmation'
+      path: '/api/bookings/send-confirmation'
+      fullPath: '/api/bookings/send-confirmation'
+      preLoaderRoute: typeof ApiBookingsSendConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/invite': {
+      id: '/api/staff/invite'
+      path: '/api/staff/invite'
+      fullPath: '/api/staff/invite'
+      preLoaderRoute: typeof ApiStaffInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -391,6 +471,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminGalleryRoute: typeof AdminGalleryRoute
   AdminGuestsRoute: typeof AdminGuestsRoute
+  AdminLogsRoute: typeof AdminLogsRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminRoomsRoute: typeof AdminRoomsRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -402,6 +483,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminGalleryRoute: AdminGalleryRoute,
   AdminGuestsRoute: AdminGuestsRoute,
+  AdminLogsRoute: AdminLogsRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminRoomsRoute: AdminRoomsRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -419,7 +501,10 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   GalleryRoute: GalleryRoute,
   OffersRoute: OffersRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   RoomsRoute: RoomsRoute,
+  ApiBookingsSendConfirmationRoute: ApiBookingsSendConfirmationRoute,
+  ApiStaffInviteRoute: ApiStaffInviteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

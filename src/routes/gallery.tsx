@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
+import { useLang } from "@/lib/i18n";
 const heroImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg";
 const hero2 = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-2.jpg";
 const hero3 = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-3.jpg";
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/gallery")({
 });
 
 function GalleryPage() {
+  const { t } = useLang();
   const { data: images = [], isLoading } = useQuery({
     queryKey: ["gallery"],
     queryFn: fetchGalleryImages,
@@ -55,9 +57,9 @@ function GalleryPage() {
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Gallery"
-          title={<>A study in <em className="not-italic text-gold">light and warmth</em></>}
-          subtitle="Every corner of the resort — captured in the golden hour of the Ethiopian highlands."
+          eyebrow={t("page.gallery.eyebrow")}
+          title={t("page.gallery.title")}
+          subtitle={t("page.gallery.subtitle")}
           image={hero3}
         />
 

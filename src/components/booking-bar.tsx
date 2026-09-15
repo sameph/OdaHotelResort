@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Calendar, Users, BedDouble, Search } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { fetchRooms } from "@/lib/supabase-service";
 
 export function BookingBar({ variant = "floating" }: { variant?: "floating" | "inline" }) {
   const [arrival, setArrival] = useState("");
   const [departure, setDeparture] = useState("");
-  const [guests, setGuests] = useState("2 Guests");
-  const [room, setRoom] = useState("Any Room");
+  const [guests, setGuests] = useState(2);
+  const [room, setRoom] = useState("");
   const navigate = useNavigate();
+  const { data: rooms = [] } = useQuery({ queryKey: ["rooms"], queryFn: fetchRooms });
 
   const wrapper =
     variant === "floating"
@@ -17,7 +20,18 @@ export function BookingBar({ variant = "floating" }: { variant?: "floating" | "i
   return (
     <div id="booking" className={wrapper}>
       <form
-        onSubmit={(e) => { e.preventDefault(); navigate({ to: "/book" }); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          navigate({
+            to: "/book",
+            search: {
+              ...(arrival ? { checkIn: arrival } : {}),
+              ...(departure ? { checkOut: departure } : {}),
+              guests,
+              ...(room ? { room } : {}),
+            },
+          });
+        }}
         className="bg-background/95 backdrop-blur-md border border-border shadow-luxury px-4 md:px-6 py-4 md:py-5 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-2 items-end"
       >
         <Field label="Arrival" icon={Calendar}>
@@ -41,12 +55,12 @@ export function BookingBar({ variant = "floating" }: { variant?: "floating" | "i
         <Field label="Guests" icon={Users}>
           <select
             value={guests}
-            onChange={(e) => setGuests(e.target.value)}
+            onChange={(e) => setGuests(Number(e.target.value))}
             aria-label="Number of guests"
             className="w-full bg-transparent text-sm text-foreground outline-none"
           >
-            {["1 Guest", "2 Guests", "3 Guests", "4 Guests", "5+ Guests"].map((o) => (
-              <option key={o}>{o}</option>
+            {[1, 2, 3, 4, 5].map((count) => (
+              <option key={count} value={count}>{count} {count === 1 ? "Guest" : "Guests"}</option>
             ))}
           </select>
         </Field>
@@ -57,11 +71,12 @@ export function BookingBar({ variant = "floating" }: { variant?: "floating" | "i
             aria-label="Room type"
             className="w-full bg-transparent text-sm text-foreground outline-none"
           >
-            {["Any Room", "Deluxe Garden View", "Executive Suite", "Presidential Suite", "Family Villa"].map(
-              (o) => (
-                <option key={o}>{o}</option>
-              ),
-            )}
+            <option value="">Any Room</option>
+            {rooms.map((item) => (
+              <option key={item.id} value={item.slug || item.number}>
+                {item.name || `Room ${item.number}`}
+              </option>
+            ))}
           </select>
         </Field>
         <button

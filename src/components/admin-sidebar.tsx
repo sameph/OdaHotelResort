@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarCheck, BedDouble, Users, BarChart3, Home, LogOut, Image as ImageIcon, Tag, MessageSquare } from "lucide-react";
+import { LayoutDashboard, CalendarCheck, BedDouble, Users, BarChart3, Home, LogOut, Image as ImageIcon, Tag, MessageSquare, History } from "lucide-react";
 import { ensureSupabase } from "@/lib/supabase";
+import type { StaffRole } from "@/routes/admin";
 
-const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
+const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/bookings", label: "Bookings", icon: CalendarCheck },
   { to: "/admin/rooms", label: "Rooms", icon: BedDouble },
@@ -11,9 +12,10 @@ const items: { to: string; label: string; icon: typeof LayoutDashboard; exact?: 
   { to: "/admin/contacts", label: "Messages", icon: MessageSquare },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+  { to: "/admin/logs", label: "Activity Logs", icon: History, adminOnly: true },
 ];
 
-export function AdminSidebar({ className }: { className?: string }) {
+export function AdminSidebar({ className, role = "receptionist" }: { className?: string; role?: StaffRole }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   return (
     <aside className={className || "hidden lg:flex flex-col w-64 shrink-0 bg-forest-deep text-white sticky top-0 h-screen"}>
@@ -28,7 +30,13 @@ export function AdminSidebar({ className }: { className?: string }) {
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1" aria-label="Admin">
-        {items.map((it) => {
+        {items.filter(it => {
+          if (it.adminOnly && role !== "admin") return false;
+          if (role === "admin") return true;
+          // Block these from receptionist
+          const restricted = ["/admin/analytics", "/admin/gallery", "/admin/offers", "/admin/rooms", "/admin/logs"];
+          return !restricted.includes(it.to);
+        }).map((it) => {
           const active = it.exact ? path === it.to : path.startsWith(it.to);
           const Icon = it.icon;
           return (

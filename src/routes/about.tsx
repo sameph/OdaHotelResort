@@ -5,6 +5,7 @@ import { PageHero } from "@/components/page-hero";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 import { Award, HeartHandshake, Leaf, Sparkles } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 const hero2 = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-2.jpg";
 const poolImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/pool.jpg";
 const coffee = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/coffee-ceremony.jpg";
@@ -31,14 +32,15 @@ const values = [
 ];
 
 function AboutPage() {
+  const { t } = useLang();
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Our Story"
-          title={<>A sanctuary shaped by <em className="not-italic text-gold">Ethiopian soul</em></>}
-          subtitle="Set against the rolling hills of Adama, ODA Resort Hotel weaves centuries-old hospitality into modern luxury."
+          eyebrow={t("page.about.eyebrow")}
+          title={t("page.about.title")}
+          subtitle={t("page.about.subtitle")}
           image={hero2}
         />
 

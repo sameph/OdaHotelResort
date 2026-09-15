@@ -6,6 +6,7 @@ import { Reveal } from "@/components/reveal";
 import { ArrowRight, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOffers } from "@/lib/supabase-service";
+import { useLang } from "@/lib/i18n";
 
 const hero3 = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-3.jpg";
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/offers")({
 });
 
 function OffersPage() {
+  const { t } = useLang();
   const { data: offers = [] } = useQuery({
     queryKey: ["offers"],
     queryFn: fetchOffers,
@@ -34,9 +36,9 @@ function OffersPage() {
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Offers & Packages"
-          title={<>Curated packages, <em className="not-italic text-gold">exceptional value</em></>}
-          subtitle="Six thoughtfully assembled experiences — from a two-night reset to a slow week in the highlands."
+          eyebrow={t("page.offers.eyebrow")}
+          title={t("page.offers.title")}
+          subtitle={t("page.offers.subtitle")}
           image={hero3}
         />
 

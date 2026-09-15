@@ -233,7 +233,7 @@ function FeaturedRooms({ rooms = [] }: { rooms?: import("@/lib/supabase-types").
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-forest-deep">
-                    From ${r.price}/night
+                    From Br {r.price.toLocaleString("en-US")}/night
                   </div>
                 </div>
                 <div className="p-7 flex-1 flex flex-col">

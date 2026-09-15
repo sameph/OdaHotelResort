@@ -27,5 +27,11 @@ create policy "Allow authenticated delete."
   to authenticated
   using ( true );
 
+create policy "Admins manage gallery storage"
+  on storage.objects for all
+  to authenticated
+  using (bucket_id = 'gallery-images' and public.current_staff_role() = 'admin')
+  with check (bucket_id = 'gallery-images' and public.current_staff_role() = 'admin');
+
 -- Reload schema cache in case table was added but not recognized
 NOTIFY pgrst, reload_schema;

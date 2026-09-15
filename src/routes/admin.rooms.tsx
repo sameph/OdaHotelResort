@@ -11,6 +11,7 @@ import {
   uploadImage,
 } from "@/lib/supabase-service";
 import type { RoomInsert, RoomRow } from "@/lib/supabase-types";
+import { useAdminRole } from "./admin";
 
 export const Route = createFileRoute("/admin/rooms")({
   component: RoomsAdminPage,
@@ -31,6 +32,11 @@ function formatBirr(n: number) {
 }
 
 function RoomsAdminPage() {
+  const role = useAdminRole();
+  if (role !== "admin") {
+    return <div className="p-16 text-center text-muted-foreground">Unauthorized access. Only administrators can manage rooms.</div>;
+  }
+
   const [filter, setFilter] = useState<RoomFilter>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null);

@@ -9,6 +9,7 @@ import { Reveal } from "@/components/reveal";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRooms } from "@/lib/supabase-service";
 import type { Room, RoomType, RoomView, RoomAmenity } from "@/data/rooms";
+import { useLang } from "@/lib/i18n";
 const heroImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg";
 
 export const Route = createFileRoute("/rooms")({
@@ -41,6 +42,7 @@ function formatBirr(n: number) {
 }
 
 function RoomsPage() {
+  const { t } = useLang();
   const [priceMax, setPriceMax] = useState<number>(PRICE_MAX);
   const [types, setTypes] = useState<Set<RoomType>>(new Set());
   const [views, setViews] = useState<Set<RoomView>>(new Set());
@@ -186,9 +188,9 @@ function RoomsPage() {
       <SiteHeader />
       <main id="main">
         <PageHero
-          eyebrow="Accommodations"
-          title={<>Rooms & <em className="not-italic text-gold">Suites</em></>}
-          subtitle="Discover our collection of elegantly appointed rooms and suites, each designed for comfort and inspired by Ethiopian hospitality."
+          eyebrow={t("page.rooms.eyebrow")}
+          title={t("page.rooms.title")}
+          subtitle={t("page.rooms.subtitle")}
           image={heroImg}
         />
 

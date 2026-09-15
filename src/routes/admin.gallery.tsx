@@ -8,13 +8,16 @@ import {
   deleteGalleryImage,
   uploadImage,
 } from "@/lib/supabase-service";
+import { logActivity } from "@/lib/activity-logger.server";
 import { Trash2 } from "lucide-react";
+import { useAdminRole } from "./admin";
 
 export const Route = createFileRoute("/admin/gallery")({
   component: AdminGallery,
 });
 
 function AdminGallery() {
+  const role = useAdminRole();
   const queryClient = useQueryClient();
   const [src, setSrc] = useState("");
   const [alt, setAlt] = useState("");
@@ -32,7 +35,24 @@ function AdminGallery() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: insertGalleryImage,
+    mutationFn: async (data: { src: string; alt: string; tag: string }) => {
+      const result = await insertGalleryImage(data);
+      // Log the upload
+      try {
+        await logActivity({
+          data: {
+            action: "upload",
+            resource_type: "gallery_image",
+            resource_id: String(result.id),
+            resource_name: data.alt || "Gallery Image",
+            details: { tag: data.tag },
+          },
+        });
+      } catch (err) {
+        console.warn("Failed to log upload activity:", err);
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gallery"] });
       setSrc("");
@@ -43,9 +63,31 @@ function AdminGallery() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteGalleryImage,
+    mutationFn: async (id: number) => {
+      await deleteGalleryImage(id);
+      // Log the delete
+      try {
+        await logActivity({
+          data: {
+            action: "delete",
+            resource_type: "gallery_image",
+            resource_id: String(id),
+          },
+        });
+      } catch (err) {
+        console.warn("Failed to log delete activity:", err);
+      }
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gallery"] }),
   });
+
+  if (role === "receptionist") {
+    return (
+      <div className="p-16 text-center text-muted-foreground">
+        Unauthorized access. Only administrators can manage the Gallery.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -148,14 +190,14 @@ function AdminGallery() {
           {images.map((img) => (
             <div
               key={img.id}
-              className="relative group overflow-hidden border border-border aspect-[3/4]"
+              className="relative group overflow-hidden border border-border aspect-3/4"
             >
               <img
                 src={img.src}
                 alt={img.alt}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
                 <span className="text-[10px] uppercase tracking-widest text-white/90">
                   {img.tag}
                 </span>

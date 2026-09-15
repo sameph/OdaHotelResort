@@ -8,6 +8,7 @@ import { PageHero } from "@/components/page-hero";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 import { Mail, MapPin, Phone, Send } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 const hero2 =
   "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-2.jpg";
 
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
+  const { t } = useLang();
   const [sent, setSent] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -59,13 +61,9 @@ function ContactPage() {
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Contact"
-          title={
-            <>
-              We would love to <em className="not-italic text-gold">hear from you</em>
-            </>
-          }
-          subtitle="Our concierge is available 24/7 for reservations, event enquiries, and special requests."
+          eyebrow={t("page.contact.eyebrow")}
+          title={t("page.contact.title")}
+          subtitle={t("page.contact.subtitle")}
           image={hero2}
         />
 

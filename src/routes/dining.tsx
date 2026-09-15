@@ -5,6 +5,7 @@ import { PageHero } from "@/components/page-hero";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 import { DiningExperience } from "@/components/dining-experience";
+import { useLang } from "@/lib/i18n";
 import { Utensils, Wine, Coffee, Sun } from "lucide-react";
 const diningHero = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-4.jpg";
 const diningImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/dining.jpg";
@@ -34,14 +35,15 @@ const outlets = [
 ];
 
 function DiningPage() {
+  const { t } = useLang();
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Culinary Experience"
-          title={<>A journey through <em className="not-italic text-gold">Ethiopian flavour</em></>}
-          subtitle="Four distinct venues, one deeply Ethiopian sensibility — from single-origin coffee to chef's table tastings."
+          eyebrow={t("page.dining.eyebrow")}
+          title={t("page.dining.title")}
+          subtitle={t("page.dining.subtitle")}
           image={diningHero}
         />
 

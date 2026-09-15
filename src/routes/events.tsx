@@ -5,6 +5,7 @@ import { PageHero } from "@/components/page-hero";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 import { Heart, Briefcase, Presentation, PartyPopper, ArrowRight } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 const eventsImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/events.jpg";
 const diningHall = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/dining-hall.jpg";
 const hero2 = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-2.jpg";
@@ -37,14 +38,15 @@ const venues = [
 ];
 
 function EventsPage() {
+  const { t } = useLang();
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
         <PageHero
-          eyebrow="Conferences & Events"
-          title={<>Moments made <em className="not-italic text-gold">memorable</em></>}
-          subtitle="Three distinct venues, one dedicated events team, and Ethiopian hospitality as your welcome."
+          eyebrow={t("page.events.eyebrow")}
+          title={t("page.events.title")}
+          subtitle={t("page.events.subtitle")}
           image={eventsImg}
         />
 
