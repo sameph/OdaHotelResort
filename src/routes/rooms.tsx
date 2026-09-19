@@ -9,15 +9,23 @@ import { Reveal } from "@/components/reveal";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRooms } from "@/lib/supabase-service";
 import type { Room, RoomType, RoomView, RoomAmenity } from "@/data/rooms";
-const heroImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg";
+const heroImg =
+  "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg";
 
 export const Route = createFileRoute("/rooms")({
   head: () => ({
     meta: [
       { title: "Rooms & Suites — ODA Resort Hotel" },
-      { name: "description", content: "Discover elegantly appointed rooms, suites and villas at ODA Resort Hotel in Adama, Ethiopia. Filter by type, view, capacity and amenities." },
+      {
+        name: "description",
+        content:
+          "Discover elegantly appointed rooms, suites and villas at ODA Resort Hotel in Adama, Ethiopia. Filter by type, view, capacity and amenities.",
+      },
       { property: "og:title", content: "Rooms & Suites — ODA Resort Hotel" },
-      { property: "og:description", content: "Six distinct rooms and suites, each inspired by Ethiopian hospitality." },
+      {
+        property: "og:description",
+        content: "Six distinct rooms and suites, each inspired by Ethiopian hospitality.",
+      },
       { property: "og:url", content: "/rooms" },
     ],
     links: [{ rel: "canonical", href: "/rooms" }],
@@ -28,8 +36,14 @@ export const Route = createFileRoute("/rooms")({
 const ROOM_TYPES: RoomType[] = ["Suite", "Deluxe", "Villa"];
 const ROOM_VIEWS: RoomView[] = ["Rift Valley View", "Garden View", "Pool View"];
 const AMENITIES: RoomAmenity[] = [
-  "King-size bed", "Queen-size bed", "Twin beds", "Private balcony",
-  "Soaking tub", "Mini bar", "Free WiFi", "Butler service",
+  "King-size bed",
+  "Queen-size bed",
+  "Twin beds",
+  "Private balcony",
+  "Soaking tub",
+  "Mini bar",
+  "Free WiFi",
+  "Butler service",
 ];
 const CAPACITIES = [1, 2, 3, 5] as const;
 
@@ -50,21 +64,26 @@ function RoomsPage() {
 
   const { data: dbRooms = [] } = useQuery({ queryKey: ["rooms"], queryFn: fetchRooms });
 
-  const rooms = useMemo<Room[]>(() => dbRooms.map(r => ({
-    name: r.name || `Room ${r.number}`,
-    slug: r.slug || r.number,
-    img: r.image_url || heroImg,
-    price: r.price,
-    type: r.type as RoomType,
-    view: r.view as RoomView,
-    desc: r.description || "Elegant and spacious accommodation.",
-    tags: r.amenities?.slice(0, 4) || [],
-    beds: r.beds || "King size bed",
-    size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
-    guests: r.capacity,
-    popular: r.popular || false,
-    amenities: r.amenities || []
-  })), [dbRooms]);
+  const rooms = useMemo<Room[]>(
+    () =>
+      dbRooms.map((r) => ({
+        name: r.name || `Room ${r.number}`,
+        slug: r.slug || r.number,
+        img: r.image_url || heroImg,
+        price: r.price,
+        type: r.type as RoomType,
+        view: r.view as RoomView,
+        desc: r.description || "Elegant and spacious accommodation.",
+        tags: r.amenities?.slice(0, 4) || [],
+        beds: r.beds || "King size bed",
+        size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
+        sizeSqm: r.size_sqm ?? 32,
+        guests: r.capacity,
+        popular: r.popular || false,
+        amenities: r.amenities || [],
+      })),
+    [dbRooms],
+  );
 
   const filtered = useMemo<Room[]>(() => {
     return rooms.filter((r) => {
@@ -187,7 +206,11 @@ function RoomsPage() {
       <main id="main">
         <PageHero
           eyebrow="Accommodations"
-          title={<>Rooms & <em className="not-italic text-gold">Suites</em></>}
+          title={
+            <>
+              Rooms & <em className="not-italic text-gold">Suites</em>
+            </>
+          }
           subtitle="Discover our collection of elegantly appointed rooms and suites, each designed for comfort and inspired by Ethiopian hospitality."
           image={heroImg}
         />
@@ -223,7 +246,9 @@ function RoomsPage() {
                 {filtered.length === 0 ? (
                   <div className="py-24 text-center text-muted-foreground">
                     No rooms match those filters yet.{" "}
-                    <button onClick={clearAll} className="text-gold underline">Clear filters</button>
+                    <button onClick={clearAll} className="text-gold underline">
+                      Clear filters
+                    </button>
                   </div>
                 ) : (
                   <div className="grid gap-6 md:grid-cols-2">
@@ -336,9 +361,18 @@ function RoomCard({ room }: { room: Room }) {
 
         <div className="mt-auto pt-5 flex items-center justify-between gap-3 border-t border-border">
           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><BedDouble className="h-3.5 w-3.5 text-gold" />{room.beds.split(" ").slice(0, 3).join(" ")}</span>
-            <span className="flex items-center gap-1"><Maximize className="h-3.5 w-3.5 text-gold" />{room.size}</span>
-            <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-gold" />{room.guests}</span>
+            <span className="flex items-center gap-1">
+              <BedDouble className="h-3.5 w-3.5 text-gold" />
+              {room.beds.split(" ").slice(0, 3).join(" ")}
+            </span>
+            <span className="flex items-center gap-1">
+              <Maximize className="h-3.5 w-3.5 text-gold" />
+              {room.size}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5 text-gold" />
+              {room.guests}
+            </span>
           </div>
           <Link
             to="/book"

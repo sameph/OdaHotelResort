@@ -13,6 +13,8 @@ import type {
   JournalInsert,
   ContactInsert,
   ContactRow,
+  MenuItemRow,
+  MenuItemInsert,
 } from "./supabase-types";
 
 export async function uploadImage(file: File, bucket: string, folder: string): Promise<string> {
@@ -428,3 +430,63 @@ export async function updateContactStatus(id: number, status: string): Promise<C
   return data as ContactRow;
 }
 
+// --- Menu Items ---
+
+export async function fetchMenuItems(): Promise<MenuItemRow[]> {
+  const supabase = ensureSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("food_menu")
+      .select("*")
+      .order("featured", { ascending: false })
+      .order("category")
+      .order("title");
+
+    if (error) {
+      if (typeof error.message === "string" && error.message.includes("Could not find the table")) {
+        console.warn(
+          "fetchMenuItems: food_menu table missing in DB schema cache - returning empty list.",
+          error.message,
+        );
+        return [];
+      }
+      throw error;
+    }
+
+    return data ?? [];
+  } catch (e: any) {
+    console.warn("fetchMenuItems error, returning empty list:", e?.message ?? e);
+    return [];
+  }
+}
+
+export async function createMenuItem(payload: MenuItemInsert): Promise<MenuItemRow> {
+  const { data, error } = await ensureSupabase()
+    .from("food_menu")
+    .insert(payload as never)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as MenuItemRow;
+}
+
+export async function updateMenuItem(
+  id: number,
+  payload: Partial<MenuItemInsert>,
+): Promise<MenuItemRow> {
+  const { data, error } = await ensureSupabase()
+    .from("food_menu")
+    .update(payload as never)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as MenuItemRow;
+}
+
+export async function deleteMenuItem(id: number): Promise<void> {
+  const { error } = await ensureSupabase().from("food_menu").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

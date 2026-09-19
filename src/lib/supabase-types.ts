@@ -166,7 +166,6 @@ export interface ContactInsert {
   status?: "read" | "unread" | "responded";
 }
 
-
 export interface RoomInsert {
   number: string;
   type: string;
@@ -185,6 +184,30 @@ export interface RoomInsert {
   size_sqm?: number | null;
   popular?: boolean | null;
 }
+
+export interface MenuItemRow {
+  id: number;
+  category: string;
+  title: string;
+  description: string;
+  price: string;
+  allergens: string[] | null;
+  featured: boolean;
+  image_url: string | null;
+  created_at?: string;
+}
+
+export interface MenuItemInsert {
+  category: string;
+  title: string;
+  description: string;
+  price: string;
+  allergens?: string[] | null;
+  featured?: boolean;
+  image_url?: string | null;
+}
+
+export interface MenuItemUpdate extends Partial<MenuItemInsert> {}
 
 export interface Database {
   public: {
@@ -214,6 +237,11 @@ export interface Database {
         Insert: OfferInsert;
         Update: Partial<OfferInsert>;
       };
+      food_menu: {
+        Row: MenuItemRow;
+        Insert: MenuItemInsert;
+        Update: MenuItemUpdate;
+      };
       journal_posts: {
         Row: JournalRow;
         Insert: JournalInsert;
@@ -223,6 +251,11 @@ export interface Database {
         Row: ContactRow;
         Insert: ContactInsert;
         Update: Partial<ContactInsert>;
+      };
+      menu_items: {
+        Row: MenuItemRow;
+        Insert: MenuItemInsert;
+        Update: Partial<MenuItemUpdate>;
       };
     };
     Views: Record<string, never>;

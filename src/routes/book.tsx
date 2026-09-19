@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, useEffect, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
+import {
+  useMemo,
+  useState,
+  useEffect,
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -125,23 +132,33 @@ function BookPage() {
   const search = Route.useSearch();
   const roomParam = search.room;
   const payRef = search.ref;
-  const { data: dbRooms = [], isLoading: isLoadingRooms } = useQuery({ queryKey: ["rooms"], queryFn: fetchRooms });
-  
-  const rooms = useMemo<Room[]>(() => dbRooms.map(r => ({
-    name: r.name || `Room ${r.number}`,
-    slug: r.slug || r.number,
-    img: r.image_url || "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg",
-    price: r.price,
-    type: r.type as RoomType,
-    view: r.view as RoomView,
-    desc: r.description || "Elegant accommodation.",
-    tags: r.amenities?.slice(0, 4) || [],
-    beds: r.beds || "King size bed",
-    size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
-    guests: r.capacity,
-    popular: r.popular || false,
-    amenities: r.amenities || []
-  })), [dbRooms]);
+  const { data: dbRooms = [], isLoading: isLoadingRooms } = useQuery({
+    queryKey: ["rooms"],
+    queryFn: fetchRooms,
+  });
+
+  const rooms = useMemo<Room[]>(
+    () =>
+      dbRooms.map((r) => ({
+        name: r.name || `Room ${r.number}`,
+        slug: r.slug || r.number,
+        img:
+          r.image_url ||
+          "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/hero-resort.jpg",
+        price: r.price,
+        type: r.type as RoomType,
+        view: r.view as RoomView,
+        desc: r.description || "Elegant accommodation.",
+        tags: r.amenities?.slice(0, 4) || [],
+        beds: r.beds || "King size bed",
+        size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
+        sizeSqm: r.size_sqm ?? 32,
+        guests: r.capacity,
+        popular: r.popular || false,
+        amenities: r.amenities || [],
+      })),
+    [dbRooms],
+  );
 
   const [step, setStep] = useState(payRef ? 5 : 1);
 
@@ -272,9 +289,9 @@ function BookPage() {
               return_url: `${window.location.origin}/book?ref=${ref}`,
               title: "ODA Resort",
               description: `Booking - ${nights} nights`,
-            }
+            },
           });
-          
+
           if (res && res.checkoutUrl) {
             window.location.href = res.checkoutUrl;
             return;
@@ -317,7 +334,10 @@ function BookPage() {
     );
   }
 
-  if (rooms.length === 0) return <div className="min-h-screen bg-cream pt-40 text-center">No rooms available currently.</div>;
+  if (rooms.length === 0)
+    return (
+      <div className="min-h-screen bg-cream pt-40 text-center">No rooms available currently.</div>
+    );
 
   return (
     <div className="min-h-screen bg-cream">
@@ -581,60 +601,68 @@ function StepDatesRoom({
 
       <h3 className="mt-8 text-sm uppercase tracking-[0.2em] text-forest-deep">Select Room</h3>
       <div className="mt-4 space-y-3">
-        {isAvailabilityLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 border border-border animate-pulse bg-white">
-              <div className="h-20 w-24 bg-muted shrink-0 rounded" />
-              <div className="flex-1 space-y-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="h-5 bg-muted rounded-md w-1/3" />
-                  <div className="h-5 bg-muted rounded-md w-1/4" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="h-4 bg-muted rounded w-1/2" />
-                  <div className="h-4 bg-muted rounded w-1/6" />
+        {isAvailabilityLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-3 border border-border animate-pulse bg-white"
+              >
+                <div className="h-20 w-24 bg-muted shrink-0 rounded" />
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-baseline justify-between">
+                    <div className="h-5 bg-muted rounded-md w-1/3" />
+                    <div className="h-5 bg-muted rounded-md w-1/4" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-4 bg-muted rounded w-1/2" />
+                    <div className="h-4 bg-muted rounded w-1/6" />
+                  </div>
                 </div>
               </div>
+            ))
+          : rooms
+              .filter(
+                (r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug)),
+              )
+              .map((r) => {
+                const active = r.slug === roomSlug;
+                return (
+                  <button
+                    key={r.slug}
+                    type="button"
+                    onClick={() => setRoomSlug(r.slug)}
+                    className={`w-full text-left flex items-center gap-4 p-3 border transition-all ${
+                      active
+                        ? "border-forest-deep bg-forest-deep/5 ring-1 ring-forest-deep/30"
+                        : "border-border hover:border-forest-deep/50"
+                    }`}
+                  >
+                    <img src={r.img} alt="" className="h-20 w-24 object-cover shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-4">
+                        <span className="font-serif text-lg text-forest-deep">{r.name}</span>
+                        <span className="font-serif text-lg text-forest-deep">
+                          {currency(r.price)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground mt-1">
+                        <span>
+                          {r.beds} • {r.size} • {r.guests} guests
+                        </span>
+                        <span>/night</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+        {!isAvailabilityLoading &&
+          rooms.filter(
+            (r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug)),
+          ).length === 0 && (
+            <div className="py-8 text-center border border-border text-sm text-muted-foreground bg-white">
+              No rooms available for the selected dates and guest count. Try adjusting your search.
             </div>
-          ))
-        ) : (
-          rooms
-            .filter((r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug)))
-            .map((r) => {
-            const active = r.slug === roomSlug;
-            return (
-              <button
-                key={r.slug}
-                type="button"
-                onClick={() => setRoomSlug(r.slug)}
-                className={`w-full text-left flex items-center gap-4 p-3 border transition-all ${
-                  active
-                    ? "border-forest-deep bg-forest-deep/5 ring-1 ring-forest-deep/30"
-                    : "border-border hover:border-forest-deep/50"
-                }`}
-              >
-                <img src={r.img} alt="" className="h-20 w-24 object-cover shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="font-serif text-lg text-forest-deep">{r.name}</span>
-                    <span className="font-serif text-lg text-forest-deep">{currency(r.price)}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground mt-1">
-                    <span>
-                      {r.beds} • {r.size} • {r.guests} guests
-                    </span>
-                    <span>/night</span>
-                  </div>
-                </div>
-              </button>
-            );
-          })
-        )}
-        {(!isAvailabilityLoading && rooms.filter((r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug))).length === 0) && (
-          <div className="py-8 text-center border border-border text-sm text-muted-foreground bg-white">
-            No rooms available for the selected dates and guest count. Try adjusting your search.
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
@@ -813,11 +841,21 @@ function StepPayment({
         <div className="mt-8 p-6 border border-border bg-forest-deep/5 text-sm rounded-sm">
           <div className="flex items-start gap-4">
             <div className="bg-white p-2 rounded shadow-sm shrink-0 mt-1">
-              <img src="https://chapa.link/asset/images/chapa_swirl.svg" alt="Chapa Logo" className="h-8 w-8 object-contain" />
+              <img
+                src="https://chapa.link/asset/images/chapa_swirl.svg"
+                alt="Chapa Logo"
+                className="h-8 w-8 object-contain"
+              />
             </div>
             <div className="text-foreground/80 leading-relaxed">
-              <p className="mb-2 text-forest-deep text-lg font-serif">Secure online payment by Chapa</p>
-              <p>When you click "Confirm & Pay", you will be redirected to Chapa's secure checkout. You can complete your payment using international Credit/Debit cards, Telebirr, CBE Birr, or Awash Birr.</p>
+              <p className="mb-2 text-forest-deep text-lg font-serif">
+                Secure online payment by Chapa
+              </p>
+              <p>
+                When you click "Confirm & Pay", you will be redirected to Chapa's secure checkout.
+                You can complete your payment using international Credit/Debit cards, Telebirr, CBE
+                Birr, or Awash Birr.
+              </p>
             </div>
           </div>
         </div>

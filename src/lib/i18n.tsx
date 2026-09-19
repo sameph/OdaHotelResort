@@ -13,16 +13,27 @@ export const LANGUAGES: { code: LangCode; label: string; native: string; flag: s
 type Dict = Record<string, string>;
 const T: Record<LangCode, Dict> = {
   en: {
-    "nav.home": "Home", "nav.rooms": "Rooms", "nav.about": "About", "nav.dining": "Dining",
-    "nav.gallery": "Gallery", "nav.events": "Events", "nav.offers": "Offers", "nav.contact": "Contact",
-    "cta.book": "Book Now", "cta.bookRoom": "Book This Room", "cta.details": "Details",
+    "nav.home": "Home",
+    "nav.rooms": "Rooms",
+    "nav.about": "About",
+    "nav.dining": "Dining",
+    "nav.menu": "Menu",
+    "nav.gallery": "Gallery",
+    "nav.events": "Events",
+    "nav.offers": "Offers",
+    "nav.contact": "Contact",
+    "cta.book": "Book Now",
+    "cta.bookRoom": "Book This Room",
+    "cta.details": "Details",
     "footer.tagline": "A luxury resort in Adama, Ethiopia.",
     "lang.label": "Language",
     "index.about.eyebrow": "Our Story",
     "index.about.title": "A Sanctuary Shaped by Ethiopian Soul",
-    "index.about.p1": "Set against the rolling hills of Adama, ODA Resort Hotel is a contemporary sanctuary where centuries-old Ethiopian hospitality meets modern craft. Every stone, every textile, every plated course is chosen to tell a story of place.",
-    "index.about.p2": "From private garden villas to our sun-drenched infinity pool, ODA is a place to slow down, gather with those who matter, and rise refreshed for whatever comes next.",
-    "index.about.quote": "\"Where Ethiopia's warmth becomes something you can hold.\"",
+    "index.about.p1":
+      "Set against the rolling hills of Adama, ODA Resort Hotel is a contemporary sanctuary where centuries-old Ethiopian hospitality meets modern craft. Every stone, every textile, every plated course is chosen to tell a story of place.",
+    "index.about.p2":
+      "From private garden villas to our sun-drenched infinity pool, ODA is a place to slow down, gather with those who matter, and rise refreshed for whatever comes next.",
+    "index.about.quote": '"Where Ethiopia\'s warmth becomes something you can hold."',
     "index.rooms.eyebrow": "Rooms & Suites",
     "index.rooms.title": "Refined interiors, thoughtful comforts",
     "index.rooms.all": "View all rooms",
@@ -30,7 +41,8 @@ const T: Record<LangCode, Dict> = {
     "index.amenities.title": "Everything you need, thoughtfully considered",
     "index.dining.eyebrow": "Culinary Experience",
     "index.dining.title": "A tasting menu written by Ethiopia",
-    "index.dining.p1": "Our signature restaurant, Enkutash, reimagines Ethiopian classics through the lens of modern gastronomy — heritage grains, single-origin coffee, and produce grown within the resort's own gardens.",
+    "index.dining.p1":
+      "Our signature restaurant, Enkutash, reimagines Ethiopian classics through the lens of modern gastronomy — heritage grains, single-origin coffee, and produce grown within the resort's own gardens.",
     "index.dining.l1": "Enkutash — Signature fine dining",
     "index.dining.l2": "The Coffee Lounge — Traditional coffee ceremony",
     "index.dining.l3": "Sky Bar — Sunset cocktails & tapas",
@@ -38,7 +50,8 @@ const T: Record<LangCode, Dict> = {
     "index.dining.cta": "Reserve a table",
     "index.events.eyebrow": "Conference & Events",
     "index.events.title": "Moments made memorable",
-    "index.events.p1": "From intimate ceremonies to keynote conferences, our dedicated events team crafts experiences that guests remember long after they leave.",
+    "index.events.p1":
+      "From intimate ceremonies to keynote conferences, our dedicated events team crafts experiences that guests remember long after they leave.",
     "index.events.cta": "Plan Your Event",
     "index.offers.eyebrow": "Special Offers",
     "index.offers.title": "Curated packages, exceptional value",
@@ -52,10 +65,12 @@ const T: Record<LangCode, Dict> = {
     "index.journal.cta": "All articles",
     "index.faq.eyebrow": "FAQ",
     "index.faq.title": "Questions, answered",
-    "index.faq.p1": "Can't find what you're looking for? Our concierge team is available 24/7 to help.",
+    "index.faq.p1":
+      "Can't find what you're looking for? Our concierge team is available 24/7 to help.",
     "index.location.eyebrow": "Location",
     "index.location.title": "At the gateway of the Rift Valley",
-    "index.location.p1": "ODA Resort Hotel sits on the outskirts of Adama, 99 km from Addis Ababa — a scenic 90-minute drive or a private helicopter transfer.",
+    "index.location.p1":
+      "ODA Resort Hotel sits on the outskirts of Adama, 99 km from Addis Ababa — a scenic 90-minute drive or a private helicopter transfer.",
     "index.cta.title": "Ready for the highlands?",
     "index.cta.p1": "Experience ODA for yourself.",
     "btn.bookNow": "Book Now",
@@ -63,16 +78,27 @@ const T: Record<LangCode, Dict> = {
     "btn.view": "View",
   },
   es: {
-    "nav.home": "Inicio", "nav.rooms": "Habitaciones", "nav.about": "Nosotros", "nav.dining": "Restaurante",
-    "nav.gallery": "Galería", "nav.events": "Eventos", "nav.offers": "Ofertas", "nav.contact": "Contacto",
-    "cta.book": "Reservar", "cta.bookRoom": "Reservar Habitación", "cta.details": "Detalles",
+    "nav.home": "Inicio",
+    "nav.rooms": "Habitaciones",
+    "nav.about": "Nosotros",
+    "nav.dining": "Restaurante",
+    "nav.menu": "Menú",
+    "nav.gallery": "Galería",
+    "nav.events": "Eventos",
+    "nav.offers": "Ofertas",
+    "nav.contact": "Contacto",
+    "cta.book": "Reservar",
+    "cta.bookRoom": "Reservar Habitación",
+    "cta.details": "Detalles",
     "footer.tagline": "Un resort de lujo en Adama, Etiopía.",
     "lang.label": "Idioma",
     "index.about.eyebrow": "Nuestra Historia",
     "index.about.title": "Un Santuario Moldeado por el Alma Etíope",
-    "index.about.p1": "Situado frente a las colinas de Adama, ODA Resort Hotel es un santuario contemporáneo donde la hospitalidad etíope de siglos de antigüedad se une con las artesanías modernas.",
-    "index.about.p2": "Desde villas con jardín privado hasta nuestra piscina infinita bañada por el sol, ODA es un lugar para relajarse, reunirse y levantarse renovado.",
-    "index.about.quote": "\"Donde la calidez de Etiopía se convierte en algo que puedes sentir.\"",
+    "index.about.p1":
+      "Situado frente a las colinas de Adama, ODA Resort Hotel es un santuario contemporáneo donde la hospitalidad etíope de siglos de antigüedad se une con las artesanías modernas.",
+    "index.about.p2":
+      "Desde villas con jardín privado hasta nuestra piscina infinita bañada por el sol, ODA es un lugar para relajarse, reunirse y levantarse renovado.",
+    "index.about.quote": '"Donde la calidez de Etiopía se convierte en algo que puedes sentir."',
     "index.rooms.eyebrow": "Habitaciones y Suites",
     "index.rooms.title": "Interiores refinados, comodidades atentas",
     "index.rooms.all": "Ver todas las habitaciones",
@@ -80,7 +106,8 @@ const T: Record<LangCode, Dict> = {
     "index.amenities.title": "Todo lo que necesitas, considerado cuidadosamente",
     "index.dining.eyebrow": "Experiencia Culinaria",
     "index.dining.title": "Un menú degustación escrito por Etiopía",
-    "index.dining.p1": "Nuestro restaurante insignia, Enkutash, reimagina los clásicos etíopes a través del lente de la gastronomía moderna.",
+    "index.dining.p1":
+      "Nuestro restaurante insignia, Enkutash, reimagina los clásicos etíopes a través del lente de la gastronomía moderna.",
     "index.dining.l1": "Enkutash — Alta cocina",
     "index.dining.l2": "The Coffee Lounge — Ceremonia tradicional de café",
     "index.dining.l3": "Sky Bar — Cócteles y tapas al atardecer",
@@ -88,7 +115,8 @@ const T: Record<LangCode, Dict> = {
     "index.dining.cta": "Reservar una mesa",
     "index.events.eyebrow": "Conferencias y Eventos",
     "index.events.title": "Momentos inolvidables",
-    "index.events.p1": "Desde ceremonias íntimas hasta conferencias, nuestro equipo de eventos crea experiencias que los invitados recordarán.",
+    "index.events.p1":
+      "Desde ceremonias íntimas hasta conferencias, nuestro equipo de eventos crea experiencias que los invitados recordarán.",
     "index.events.cta": "Planifique su evento",
     "index.offers.eyebrow": "Ofertas Especiales",
     "index.offers.title": "Paquetes seleccionados",
@@ -105,7 +133,8 @@ const T: Record<LangCode, Dict> = {
     "index.faq.p1": "¿No encuentras lo que buscas? Nuestro conserje te ayudará 24/7.",
     "index.location.eyebrow": "Ubicación",
     "index.location.title": "Las puertas del Valle del Rift",
-    "index.location.p1": "El ODA Resort Hotel se encuentra en las afueras de Adama, a una hora o mediante traslado privado.",
+    "index.location.p1":
+      "El ODA Resort Hotel se encuentra en las afueras de Adama, a una hora o mediante traslado privado.",
     "index.cta.title": "¿Listo para la aventura?",
     "index.cta.p1": "Experimenta ODA tú mismo.",
     "btn.bookNow": "Reservar Ahora",
@@ -113,16 +142,27 @@ const T: Record<LangCode, Dict> = {
     "btn.view": "Ver",
   },
   fr: {
-    "nav.home": "Accueil", "nav.rooms": "Chambres", "nav.about": "À propos", "nav.dining": "Restauration",
-    "nav.gallery": "Galerie", "nav.events": "Événements", "nav.offers": "Offres", "nav.contact": "Contact",
-    "cta.book": "Réserver", "cta.bookRoom": "Réserver cette chambre", "cta.details": "Détails",
+    "nav.home": "Accueil",
+    "nav.rooms": "Chambres",
+    "nav.about": "À propos",
+    "nav.dining": "Restauration",
+    "nav.menu": "Menu",
+    "nav.gallery": "Galerie",
+    "nav.events": "Événements",
+    "nav.offers": "Offres",
+    "nav.contact": "Contact",
+    "cta.book": "Réserver",
+    "cta.bookRoom": "Réserver cette chambre",
+    "cta.details": "Détails",
     "footer.tagline": "Un complexe de luxe à Adama, Éthiopie.",
     "lang.label": "Langue",
     "index.about.eyebrow": "Notre Histoire",
     "index.about.title": "Un Sanctuaire Façonné par l'Âme Éthiopienne",
-    "index.about.p1": "Situé face aux collines d'Adama, l'ODA Resort Hotel est un sanctuaire contemporain où l'hospitalité éthiopienne rencontre l'artisanat moderne.",
-    "index.about.p2": "Des villas avec jardin privé à notre piscine à débordement, ODA est un lieu pour se détendre, se réunir et se lever reposé.",
-    "index.about.quote": "\"Où la chaleur de l'Éthiopie devient tangible.\"",
+    "index.about.p1":
+      "Situé face aux collines d'Adama, l'ODA Resort Hotel est un sanctuaire contemporain où l'hospitalité éthiopienne rencontre l'artisanat moderne.",
+    "index.about.p2":
+      "Des villas avec jardin privé à notre piscine à débordement, ODA est un lieu pour se détendre, se réunir et se lever reposé.",
+    "index.about.quote": '"Où la chaleur de l\'Éthiopie devient tangible."',
     "index.rooms.eyebrow": "Chambres et Suites",
     "index.rooms.title": "Intérieurs raffinés, conforts pensés",
     "index.rooms.all": "Voir toutes les chambres",
@@ -130,7 +170,8 @@ const T: Record<LangCode, Dict> = {
     "index.amenities.title": "Tout ce dont vous avez besoin, pensé avec soin",
     "index.dining.eyebrow": "Expérience Culinaire",
     "index.dining.title": "Un menu dégustation écrit par l'Éthiopie",
-    "index.dining.p1": "Notre restaurant exclusif, Enkutash, réinvente les classiques à travers la gastronomie moderne.",
+    "index.dining.p1":
+      "Notre restaurant exclusif, Enkutash, réinvente les classiques à travers la gastronomie moderne.",
     "index.dining.l1": "Enkutash — Dîner exclusif",
     "index.dining.l2": "The Coffee Lounge — Cérémonie traditionnelle",
     "index.dining.l3": "Sky Bar — Cocktails et tapas de coucher de soleil",
@@ -138,7 +179,8 @@ const T: Record<LangCode, Dict> = {
     "index.dining.cta": "Réserver une table",
     "index.events.eyebrow": "Conférences & Événements",
     "index.events.title": "Des moments inoubliables",
-    "index.events.p1": "Des cérémonies intimes aux grandes conférences, notre équipe crée des événements sur mesure.",
+    "index.events.p1":
+      "Des cérémonies intimes aux grandes conférences, notre équipe crée des événements sur mesure.",
     "index.events.cta": "Planifier l'événement",
     "index.offers.eyebrow": "Offres Spéciales",
     "index.offers.title": "Forfaits soigneusement élaborés",
@@ -152,10 +194,12 @@ const T: Record<LangCode, Dict> = {
     "index.journal.cta": "Tous les articles",
     "index.faq.eyebrow": "FAQ",
     "index.faq.title": "Gagner des réponses",
-    "index.faq.p1": "Vous ne trouvez pas ce que vous cherchez ? Notre concierge est disponible 24h/24.",
+    "index.faq.p1":
+      "Vous ne trouvez pas ce que vous cherchez ? Notre concierge est disponible 24h/24.",
     "index.location.eyebrow": "Emplacement",
     "index.location.title": "Aux portes de la Vallée du Rift",
-    "index.location.p1": "L'ODA Resort se trouve en périphérie d'Adama, 90 min depuis un transfert.",
+    "index.location.p1":
+      "L'ODA Resort se trouve en périphérie d'Adama, 90 min depuis un transfert.",
     "index.cta.title": "Prêt pour les Highlands ?",
     "index.cta.p1": "Vivez l'expérience ODA.",
     "btn.bookNow": "Réserver",
@@ -163,16 +207,26 @@ const T: Record<LangCode, Dict> = {
     "btn.view": "Voir",
   },
   am: {
-    "nav.home": "መነሻ", "nav.rooms": "ክፍሎች", "nav.about": "ስለ እኛ", "nav.dining": "ምግብ",
-    "nav.gallery": "ጋለሪ", "nav.events": "ዝግጅቶች", "nav.offers": "ቅናሾች", "nav.contact": "አግኙን",
-    "cta.book": "አሁን ይመዝገቡ", "cta.bookRoom": "ይህን ክፍል ይመዝገቡ", "cta.details": "ዝርዝሮች",
+    "nav.home": "መነሻ",
+    "nav.rooms": "ክፍሎች",
+    "nav.about": "ስለ እኛ",
+    "nav.dining": "ምግብ",
+    "nav.menu": "ዝርዝር",
+    "nav.gallery": "ጋለሪ",
+    "nav.events": "ዝግጅቶች",
+    "nav.offers": "ቅናሾች",
+    "nav.contact": "አግኙን",
+    "cta.book": "አሁን ይመዝገቡ",
+    "cta.bookRoom": "ይህን ክፍል ይመዝገቡ",
+    "cta.details": "ዝርዝሮች",
     "footer.tagline": "በአዳማ፣ ኢትዮጵያ የሚገኝ የቅንጦት ሪዞርት።",
     "lang.label": "ቋንቋ",
     "index.about.eyebrow": "የእኛ ታሪክ",
     "index.about.title": "በኢትዮጵያ ነፍስ የተቀረጸ መቅደስ",
-    "index.about.p1": "በሮሊንግ ኮረብታዎች ፊት በሚገኘው የኦዳ ሪዞርት ሆቴል, የኢትዮጵያውያን እንግዳ ተቀባይነት ዘመናዊ መገልገያዎችን የሚያገኝበት መቅደስ ነው።",
+    "index.about.p1":
+      "በሮሊንግ ኮረብታዎች ፊት በሚገኘው የኦዳ ሪዞርት ሆቴል, የኢትዮጵያውያን እንግዳ ተቀባይነት ዘመናዊ መገልገያዎችን የሚያገኝበት መቅደስ ነው።",
     "index.about.p2": "ወደ ፀሀያማው የመዋኛ ገንዳ, ዘና ለማለት እና ከሚወዷቸው ጋር ለመሰብሰብ.",
-    "index.about.quote": "\"የኢትዮጵያ ሞቅታ ስሜት የሚሰማዎት ስፍራ.\"",
+    "index.about.quote": '"የኢትዮጵያ ሞቅታ ስሜት የሚሰማዎት ስፍራ."',
     "index.rooms.eyebrow": "ክፍሎች እና ማረፊያዎች",
     "index.rooms.title": "የተጣራ ውስጣዊ ክፍሎች",
     "index.rooms.all": "ሁሉንም ክፍሎች ይመልከቱ",
@@ -213,16 +267,25 @@ const T: Record<LangCode, Dict> = {
     "btn.view": "ይመልከቱ",
   },
   om: {
-    "nav.home": "Fuula Duraa", "nav.rooms": "Kutaawwan", "nav.about": "Waa'ee Keenya", "nav.dining": "Nyaata",
-    "nav.gallery": "Suuraawwan", "nav.events": "Sagantaawwan", "nav.offers": "Kennaawwan", "nav.contact": "Nu Qunnamaa",
-    "cta.book": "Amma Galmaa'i", "cta.bookRoom": "Kutaa Kana Galmeessi", "cta.details": "Ibsa",
+    "nav.home": "Fuula Duraa",
+    "nav.rooms": "Kutaawwan",
+    "nav.about": "Waa'ee Keenya",
+    "nav.dining": "Nyaata",
+    "nav.menu": "Baafata",
+    "nav.gallery": "Suuraawwan",
+    "nav.events": "Sagantaawwan",
+    "nav.offers": "Kennaawwan",
+    "nav.contact": "Nu Qunnamaa",
+    "cta.book": "Amma Galmaa'i",
+    "cta.bookRoom": "Kutaa Kana Galmeessi",
+    "cta.details": "Ibsa",
     "footer.tagline": "Riizoortii miidhagaa Adaamaa, Itoophiyaa keessatti argamu.",
     "lang.label": "Afaan",
     "index.about.eyebrow": "Seenaa Keenya",
     "index.about.title": "Iddoo Qulqullaa'aa Lubbuu Itoophiyaatiin Bocame",
     "index.about.p1": "Oda Resort Hotel hamba Itoophiyaaf ta'eedha.",
     "index.about.p2": "Iddoo bashannanaa ati fi maatiin kee itti boqottanidha.",
-    "index.about.quote": "\"Bakka miidhagummaan Itoophiyaa itti mul'atu.\"",
+    "index.about.quote": '"Bakka miidhagummaan Itoophiyaa itti mul\'atu."',
     "index.rooms.eyebrow": "Kutaawwanii fi Suutota",
     "index.rooms.title": "Keessaa Qulqullina Qabu",
     "index.rooms.all": "Kutaawwan hunda ilaali",
@@ -252,10 +315,12 @@ const T: Record<LangCode, Dict> = {
     "index.journal.cta": "Barreeffamoota hunda",
     "index.faq.eyebrow": "Gaaffilee Yeroo Baay'ee Gaafatamani",
     "index.faq.title": "Gaaffilee, deebii argataniiru",
-    "index.faq.p1": "Waan barbaaddan dhabdaniittu? Gareen keenya sa'aatii 24 isin gargaaruuf qophiidha.",
+    "index.faq.p1":
+      "Waan barbaaddan dhabdaniittu? Gareen keenya sa'aatii 24 isin gargaaruuf qophiidha.",
     "index.location.eyebrow": "Bakka itti argamu",
     "index.location.title": "Karra Sulula Riftii irratti",
-    "index.location.p1": "ODA Resort Hotel daarii Adaamaa irratti argama, Finfinnee irraa kiilomeetira 99.",
+    "index.location.p1":
+      "ODA Resort Hotel daarii Adaamaa irratti argama, Finfinnee irraa kiilomeetira 99.",
     "index.cta.title": "Qophiidhaa?",
     "index.cta.p1": "ODA ofii keetiif muuxadhu.",
     "btn.bookNow": "Amma Galmaa'i",
@@ -270,12 +335,17 @@ const LangCtx = createContext<Ctx>({ lang: "en", setLang: () => {}, t: (k) => k 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<LangCode>("en");
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? (window.localStorage.getItem("oda.lang") as LangCode | null) : null;
+    const saved =
+      typeof window !== "undefined"
+        ? (window.localStorage.getItem("oda.lang") as LangCode | null)
+        : null;
     if (saved && T[saved]) setLangState(saved);
   }, []);
   const setLang = (l: LangCode) => {
     setLangState(l);
-    try { window.localStorage.setItem("oda.lang", l); } catch {}
+    try {
+      window.localStorage.setItem("oda.lang", l);
+    } catch {}
     if (typeof document !== "undefined") document.documentElement.lang = l;
   };
   const t = (key: string) => T[lang][key] ?? T.en[key] ?? key;

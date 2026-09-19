@@ -19,6 +19,7 @@ export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
     { key: "nav.rooms", to: "/rooms" },
     { key: "nav.about", to: "/about" },
     { key: "nav.dining", to: "/dining" },
+    { key: "nav.menu", to: "/menu" },
     { key: "nav.gallery", to: "/gallery" },
     { key: "nav.events", to: "/events" },
     { key: "nav.offers", to: "/offers" },
