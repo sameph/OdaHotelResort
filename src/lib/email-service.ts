@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { env } from "./env";
 
 export async function sendPaymentConfirmationEmail(
   toEmail: string,
@@ -10,14 +9,22 @@ export async function sendPaymentConfirmationEmail(
   checkOut: string,
   roomName: string,
 ) {
-  const resendApiKey = env.resendApiKey;
+  const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
   if (!resendApiKey) {
-    console.warn("RESEND_API_KEY or VITE_RESEND_API_KEY is not set. Email dispatch bypassed.");
+    console.warn("RESEND_API_KEY is not set. Email dispatch bypassed.");
     return;
   }
+
+  const fromAddress =
+    process.env.EMAIL_FROM ||
+    process.env.SENDER_EMAIL ||
+    process.env.VITE_EMAIL_FROM ||
+    "onboarding@resend.dev";
+  const siteUrl = process.env.SITE_URL || process.env.VITE_SITE_URL || "http://localhost:5173";
+
   const resend = new Resend(resendApiKey);
 
-  const cancelUrl = `${env.siteUrl}/api/bookings/cancel?ref=${txRef}`;
+  const cancelUrl = `${siteUrl.replace(/\/$/, "")}/api/bookings/cancel?ref=${txRef}`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a3c34;">
@@ -44,7 +51,7 @@ export async function sendPaymentConfirmationEmail(
 
   try {
     await resend.emails.send({
-      from: env.senderEmail,
+      from: fromAddress,
       to: toEmail,
       subject: `Your Booking is Confirmed - ${txRef}`,
       html,
