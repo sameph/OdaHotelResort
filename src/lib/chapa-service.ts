@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { env } from "./env";
 
 export const initializeChapaPayment = createServerFn({ method: "POST" })
   .validator((data: {
@@ -13,9 +14,9 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
     return_url?: string;
   }) => data)
   .handler(async ({ data }) => {
-    const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
+    const CHAPA_SECRET_KEY = env.chapaSecretKey;
     if (!CHAPA_SECRET_KEY) {
-      throw new Error("Missing CHAPA_SECRET_KEY");
+      throw new Error("Missing VITE_CHAPA_SECRET_KEY or CHAPA_SECRET_KEY");
     }
 
     const payload = {
@@ -26,7 +27,7 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
       last_name: data.last_name,
       phone_number: data.phone_number,
       tx_ref: data.tx_ref,
-      return_url: data.return_url || `${process.env.VITE_SITE_URL || "http://localhost:5173"}/book?ref=${data.tx_ref}`,
+      return_url: data.return_url || `${env.siteUrl}/book?ref=${data.tx_ref}`,
       customization: {
         title: data.title || "ODA Resort Booking",
         description: data.description || "Booking payment",
@@ -51,7 +52,6 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
         const parsed = JSON.parse(errText);
         if (parsed.message) {
           if (typeof parsed.message === 'object') {
-            // Handle cases where message is an object like {"customization.title": ["Too long"]}
             const firstValue = Object.values(parsed.message)[0];
             if (Array.isArray(firstValue) && firstValue.length > 0) {
               errorMessage = String(firstValue[0]);
@@ -62,9 +62,8 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
             errorMessage = String(parsed.message);
           }
         }
-      } catch (e) {
-         // Fallback if not JSON
-         errorMessage = errText;
+      } catch {
+        errorMessage = errText;
       }
       throw new Error(errorMessage);
     }
@@ -80,7 +79,7 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
 export const verifyChapaPayment = createServerFn({ method: "POST" })
   .validator((data: { tx_ref: string }) => data)
   .handler(async ({ data }) => {
-    const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
+    const CHAPA_SECRET_KEY = env.chapaSecretKey;
     if (!CHAPA_SECRET_KEY) return { success: false };
     
     try {
@@ -101,7 +100,7 @@ export const verifyChapaPayment = createServerFn({ method: "POST" })
         return { success: true };
       }
     } catch {
-       return { success: false };
+      return { success: false };
     }
     
     return { success: false };
