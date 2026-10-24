@@ -107,10 +107,26 @@ export const verifyChapaPayment = createServerFn({ method: "POST" })
       if (result.status === "success" || result.data?.status === "success") {
         const { ensureSupabase } = await import("./supabase");
         const supabase = ensureSupabase();
-        await supabase
+        const { data: bookingData } = await supabase
           .from("bookings")
-          .update({ status: "confirmed" } as never)
-          .eq("ref", data.tx_ref);
+          .select("*")
+          .eq("ref", data.tx_ref)
+          .single();
+
+        if (bookingData && (bookingData as any).status !== "confirmed") {
+          await supabase
+            .from("bookings")
+            .update({ status: "confirmed" } as never)
+            .eq("ref", data.tx_ref);
+
+          try {
+            const { decrementRoomAvailability } = await import("./supabase-service");
+            const b = bookingData as any;
+            await decrementRoomAvailability(b.roomSlug || b.room, b.roomType);
+          } catch (e) {
+            console.warn("Could not decrement room availability from verify:", e);
+          }
+        }
         return { success: true };
       }
     } catch {

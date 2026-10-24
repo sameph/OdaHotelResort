@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
+import { RoomImageSlider } from "@/components/room-image-slider";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRooms } from "@/lib/supabase-service";
 import type { Room, RoomType, RoomView, RoomAmenity } from "@/data/rooms";
@@ -51,7 +52,7 @@ const PRICE_MIN = 5000;
 const PRICE_MAX = 20000;
 
 function formatBirr(n: number) {
-  return "Br " + n.toLocaleString("en-US");
+  return "ETB " + n.toLocaleString("en-US");
 }
 
 function RoomsPage() {
@@ -66,30 +67,40 @@ function RoomsPage() {
 
   const rooms = useMemo<Room[]>(
     () =>
-      dbRooms.map((r) => ({
-        name: r.name || `Room ${r.number}`,
-        slug: r.slug || r.number,
-        img: r.image_url || heroImg,
-        price: r.price,
-        type: r.type as RoomType,
-        view: r.view as RoomView,
-        desc: r.description || "Elegant and spacious accommodation.",
-        tags: r.amenities?.slice(0, 4) || [],
-        beds: r.beds || "King size bed",
-        size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
-        sizeSqm: r.size_sqm ?? 32,
-        guests: r.capacity,
-        popular: r.popular || false,
-        amenities: (r.amenities as any) || [],
-        quantity: r.quantity ?? 1,
-        available_quantity:
-          r.available_quantity !== undefined && r.available_quantity !== null
-            ? r.available_quantity
-            : r.status === "occupied"
-              ? 0
-              : (r.quantity ?? 1),
-        status: r.status,
-      })),
+      dbRooms.map((r) => {
+        const rawImages =
+          r.images && Array.isArray(r.images) && r.images.length > 0
+            ? r.images
+            : r.image_url
+              ? [r.image_url]
+              : [heroImg];
+
+        return {
+          name: r.name || `Room ${r.number}`,
+          slug: r.slug || r.number,
+          img: rawImages[0] || heroImg,
+          images: rawImages,
+          price: r.price,
+          type: r.type as RoomType,
+          view: r.view as RoomView,
+          desc: r.description || "Elegant and spacious accommodation.",
+          tags: r.amenities?.slice(0, 4) || [],
+          beds: r.beds || "King size bed",
+          size: r.size_sqm ? `${r.size_sqm} sqm` : "32 sqm",
+          sizeSqm: r.size_sqm ?? 32,
+          guests: r.capacity,
+          popular: r.popular || false,
+          amenities: (r.amenities as any) || [],
+          quantity: r.quantity ?? 1,
+          available_quantity:
+            r.available_quantity !== undefined && r.available_quantity !== null
+              ? r.available_quantity
+              : r.status === "occupied"
+                ? 0
+                : (r.quantity ?? 1),
+          status: r.status,
+        };
+      }),
     [dbRooms],
   );
 
@@ -339,36 +350,40 @@ function RoomCard({ room }: { room: Room }) {
     room.status === "occupied" ||
     (room.available_quantity !== undefined && room.available_quantity <= 0);
 
+  const images =
+    room.images && room.images.length > 0 ? room.images : [room.img];
+
   return (
     <article
       className={`group bg-background border overflow-hidden hover:shadow-luxury transition-all duration-500 h-full flex flex-col ${
         isOccupied ? "border-destructive/30" : "border-border"
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <img
-          src={room.img}
-          alt={`${room.name} at ODA Resort Hotel`}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-[1600ms] group-hover:scale-110"
-        />
-
-        {/* Occupied / Popular Badge */}
-        {isOccupied ? (
-          <span className="absolute top-4 left-4 bg-destructive text-white text-[10px] font-bold px-3 py-1 uppercase tracking-[0.2em] shadow-md">
-            All Occupied
-          </span>
-        ) : room.popular ? (
-          <span className="absolute top-4 left-4 bg-gold text-gold-foreground text-[10px] px-3 py-1 uppercase tracking-[0.2em]">
-            Popular
-          </span>
-        ) : null}
-
-        <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm px-4 py-2 text-sm">
-          <span className="font-semibold text-forest-deep">{formatBirr(room.price)}</span>
-          <span className="text-xs text-muted-foreground">/night</span>
-        </div>
-      </div>
+      <RoomImageSlider
+        images={images}
+        alt={room.name}
+        aspectRatio="aspect-[4/3]"
+        overlayBadges={
+          isOccupied ? (
+            <span className="absolute top-4 left-4 z-20 bg-destructive text-white text-[10px] font-bold px-3 py-1 uppercase tracking-[0.2em] shadow-md">
+              All Occupied
+            </span>
+          ) : room.popular ? (
+            <span className="absolute top-4 left-4 z-20 bg-gold text-gold-foreground text-[10px] px-3 py-1 uppercase tracking-[0.2em]">
+              Popular
+            </span>
+          ) : null
+        }
+        priceBadge={
+          <div className="absolute bottom-4 right-4 z-20 bg-background/95 backdrop-blur-sm px-3.5 py-1.5 text-sm shadow-sm border border-border/40 text-right">
+            <div>
+              <span className="font-semibold text-forest-deep">{formatBirr(room.price)}</span>
+              <span className="text-xs text-muted-foreground">/night</span>
+            </div>
+            <span className="text-[10px] text-emerald-800 font-medium block">incl. VAT & breakfast</span>
+          </div>
+        }
+      />
       <div className="p-6 flex-1 flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold font-semibold">

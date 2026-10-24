@@ -1,0 +1,27 @@
+# =============================================================================
+# cPanel Passenger Configuration for Oda Hotel Resort
+# =============================================================================
+# Replace YOUR_CPANEL_USER with your actual cPanel username.
+# Place this file in ~/public_html/.htaccess (or your domain's document root).
+#
+# NOTE: If you configure the Node.js app through cPanel's "Setup Node.js App"
+# interface, cPanel may generate this automatically. Only use this file if
+# you need manual configuration.
+# =============================================================================
+
+PassengerAppRoot /home/YOUR_CPANEL_USER/odaresort
+PassengerAppType node
+PassengerStartupFile .output/server/index.mjs
+PassengerNodejs /home/YOUR_CPANEL_USER/nodevenv/odaresort/22/bin/node
+
+# Enable friendly error pages during setup (disable in production)
+# PassengerFriendlyErrorPages on
+
+# Restart the app by touching this file: ~/odaresort/tmp/restart.txt
+PassengerRestartDir /home/YOUR_CPANEL_USER/odaresort/tmp
+
+# Ensure all traffic goes through the Node app
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteRule ^(.*)$ / [L,PT]
+

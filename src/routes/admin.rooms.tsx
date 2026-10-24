@@ -1,9 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, type FormEvent } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { RoomImageSlider } from "@/components/room-image-slider";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, UploadCloud, Box, BedDouble, Maximize, Users } from "lucide-react";
+import {
+  Plus,
+  UploadCloud,
+  Box,
+  BedDouble,
+  Maximize,
+  Users,
+  Trash2,
+  Star,
+  ArrowLeft,
+  ArrowRight,
+  Images,
+  Check,
+} from "lucide-react";
 import {
   createRoom,
   deleteRoom,
@@ -11,6 +25,7 @@ import {
   fetchRooms,
   updateRoom,
   uploadImage,
+  uploadImages,
 } from "@/lib/supabase-service";
 import type { RoomInsert, RoomRow } from "@/lib/supabase-types";
 
@@ -20,6 +35,18 @@ export const Route = createFileRoute("/admin/rooms")({
 
 export const ROOM_CATEGORIES = ["Standard", "Twin", "Suite", "Family", "King"] as const;
 export type RoomCategory = (typeof ROOM_CATEGORIES)[number];
+
+export function normalizeRoomCategory(type?: string | null): RoomCategory {
+  if (!type) return "Standard";
+  const lower = type.toLowerCase();
+  if (lower.includes("twin")) return "Twin";
+  if (lower.includes("suite") || lower.includes("presidential") || lower.includes("executive")) return "Suite";
+  if (lower.includes("family")) return "Family";
+  if (lower.includes("king")) return "King";
+  if (lower.includes("deluxe")) return "King";
+  if (lower.includes("standard")) return "Standard";
+  return "Standard";
+}
 
 const STATUS_COLORS: Record<string, string> = {
   available: "bg-emerald-500",
@@ -32,32 +59,46 @@ const ROOM_FILTERS = ["all", "available", "occupied", "cleaning", "maintenance"]
 type RoomFilter = (typeof ROOM_FILTERS)[number];
 
 function formatBirr(n: number) {
-  return "Br " + n.toLocaleString("en-US");
+  return "ETB " + n.toLocaleString("en-US");
 }
+
+type RoomFormData = Omit<
+  RoomInsert,
+  "price" | "capacity" | "floor" | "quantity" | "available_quantity"
+> & {
+  price: number | "";
+  capacity: number | "";
+  floor: number | "";
+  quantity: number | "";
+  available_quantity: number | "";
+};
+
+const initialRoomForm: RoomFormData = {
+  number: "",
+  name: "",
+  slug: "",
+  type: "Standard",
+  view: "Garden View",
+  capacity: 2,
+  price: "",
+  status: "available",
+  floor: 1,
+  description: "",
+  amenities: [],
+  image_url: "",
+  quantity: 1,
+  available_quantity: 1,
+};
 
 function RoomsAdminPage() {
   const [filter, setFilter] = useState<RoomFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null);
-  const [form, setForm] = useState<RoomInsert>({
-    number: "",
-    name: "",
-    slug: "",
-    type: "Standard",
-    view: "Garden View",
-    capacity: 2,
-    price: 0,
-    status: "available",
-    floor: 1,
-    description: "",
-    amenities: [],
-    image_url: "",
-    quantity: 1,
-    available_quantity: 1,
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [form, setForm] = useState<RoomFormData>(initialRoomForm);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<{ id: string; file: File; preview: string }[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
@@ -79,26 +120,51 @@ function RoomsAdminPage() {
   const roomList = roomData ?? [];
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["rooms"] });
 
-  const clearForm = () => {
-    setForm({
-      number: "",
-      name: "",
-      slug: "",
-      type: "Standard",
-      view: "Garden View",
-      capacity: 2,
-      price: 0,
-      status: "available",
-      floor: 1,
-      description: "",
-      amenities: [],
-      image_url: "",
-      quantity: 1,
-      available_quantity: 1,
+  const handleAddFiles = (files: FileList | File[]) => {
+    const valid = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (valid.length === 0) return;
+    const items = valid.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setNewImageFiles((prev) => [...prev, ...items]);
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewFile = (id: string) => {
+    setNewImageFiles((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const setCoverExisting = (index: number) => {
+    setExistingImages((prev) => {
+      const copy = [...prev];
+      const [item] = copy.splice(index, 1);
+      return [item, ...copy];
     });
+  };
+
+  const moveExistingImage = (index: number, direction: "left" | "right") => {
+    setExistingImages((prev) => {
+      const copy = [...prev];
+      const targetIndex = direction === "left" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= copy.length) return prev;
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+  };
+
+  const clearForm = () => {
+    setForm(initialRoomForm);
     setEditingRoomId(null);
-    setImageFile(null);
-    setImagePreview("");
+    setExistingImages([]);
+    setNewImageFiles([]);
+    setIsUploadingImages(false);
     setFormError(null);
   };
 
@@ -307,7 +373,7 @@ function RoomsAdminPage() {
                   : "bg-muted/40 text-muted-foreground hover:bg-muted"
               }`}
             >
-              {cat === "all" ? "All Categories" : `${cat} Room`}
+              {cat === "all" ? "All Categories" : cat === "Suite" ? "Suite" : `${cat} Room`}
             </button>
           ))}
         </div>
@@ -352,26 +418,58 @@ function RoomsAdminPage() {
           onSubmit={async (event: FormEvent) => {
             event.preventDefault();
             setFormError(null);
-            let finalImageUrl = form.image_url;
+            setIsUploadingImages(true);
 
-            if (imageFile) {
+            let uploadedUrls: string[] = [];
+            if (newImageFiles.length > 0) {
               try {
-                finalImageUrl = await uploadImageMutation.mutateAsync(imageFile);
+                uploadedUrls = await uploadImages(
+                  newImageFiles.map((x) => x.file),
+                  "room-images",
+                  "room-images",
+                );
               } catch (err: any) {
-                console.error("Image upload failed:", err);
+                console.error("Multi-image upload failed:", err);
                 const msg = err?.message || "Unknown error";
-                setFormError("Image upload failed: " + msg);
-                toast.error("Image upload failed: " + msg);
+                setFormError("Images upload failed: " + msg);
+                toast.error("Images upload failed: " + msg);
+                setIsUploadingImages(false);
                 return;
               }
             }
 
+            const allImages = [...existingImages, ...uploadedUrls];
+            const primaryImageUrl = allImages[0] || form.image_url || "";
+
             const totalQty =
-              Number(form.quantity) >= 1 ? Number(form.quantity) : 1;
+              typeof form.quantity === "number" && form.quantity >= 1
+                ? form.quantity
+                : Number(form.quantity) >= 1
+                  ? Number(form.quantity)
+                  : 1;
+
             const availQty =
-              form.available_quantity !== undefined && form.available_quantity !== null
+              form.available_quantity !== "" &&
+              form.available_quantity !== undefined &&
+              form.available_quantity !== null
                 ? Math.min(totalQty, Math.max(0, Number(form.available_quantity)))
                 : totalQty;
+
+            const price =
+              form.price === "" || form.price === undefined || form.price === null
+                ? 0
+                : Math.max(0, Number(form.price));
+
+            const capacity =
+              form.capacity === "" || form.capacity === undefined || form.capacity === null
+                ? 2
+                : Math.max(1, Number(form.capacity));
+
+            const floor =
+              form.floor === "" || form.floor === undefined || form.floor === null
+                ? 1
+                : Math.max(1, Number(form.floor));
+
             const status =
               availQty <= 0
                 ? "occupied"
@@ -379,9 +477,13 @@ function RoomsAdminPage() {
                   ? "available"
                   : form.status;
 
-            const roomPayload = {
+            const roomPayload: RoomInsert = {
               ...form,
-              image_url: finalImageUrl,
+              price,
+              capacity,
+              floor,
+              image_url: primaryImageUrl,
+              images: allImages,
               slug:
                 form.slug ||
                 (form.name ?? "")
@@ -398,6 +500,7 @@ function RoomsAdminPage() {
             } else {
               saveRoom.mutate(roomPayload);
             }
+            setIsUploadingImages(false);
           }}
           className="grid gap-4 bg-background border border-border p-6 md:grid-cols-2"
         >
@@ -438,7 +541,7 @@ function RoomsAdminPage() {
               Display name
               <input
                 required
-                placeholder="Deluxe Ocean View"
+                placeholder="King Highland View"
                 value={form.name ?? ""}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full border border-border p-3 text-sm"
@@ -449,18 +552,19 @@ function RoomsAdminPage() {
               Room Category (5 Categories)
               <select
                 required
-                value={form.type}
+                value={
+                  ROOM_CATEGORIES.includes(form.type as any)
+                    ? form.type
+                    : normalizeRoomCategory(form.type)
+                }
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
                 className="w-full border border-border p-3 text-sm bg-background font-medium"
               >
                 {ROOM_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat} Room
+                    {cat === "Suite" ? "Suite" : `${cat} Room`}
                   </option>
                 ))}
-                {!ROOM_CATEGORIES.includes(form.type as any) && form.type && (
-                  <option value={form.type}>{form.type} (Legacy)</option>
-                )}
               </select>
             </label>
 
@@ -471,14 +575,21 @@ function RoomsAdminPage() {
                   required
                   type="number"
                   min="1"
-                  placeholder="10"
-                  value={form.quantity ?? 1}
+                  placeholder="1"
+                  value={form.quantity}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const q = Math.max(1, Number(e.target.value) || 1);
+                    const cleaned = e.target.value.replace(/^0+(?=\d)/, "");
+                    const q = cleaned === "" ? "" : Number(cleaned);
                     setForm((prev) => ({
                       ...prev,
                       quantity: q,
-                      available_quantity: !editingRoomId ? q : Math.min(prev.available_quantity ?? q, q),
+                      available_quantity:
+                        !editingRoomId
+                          ? q
+                          : typeof prev.available_quantity === "number" && typeof q === "number"
+                            ? Math.min(prev.available_quantity, q)
+                            : q,
                     }));
                   }}
                   className="w-full border border-border p-3 text-sm"
@@ -491,11 +602,13 @@ function RoomsAdminPage() {
                   required
                   type="number"
                   min="0"
-                  max={form.quantity ?? 9999}
-                  placeholder="10"
-                  value={form.available_quantity ?? 1}
+                  max={typeof form.quantity === "number" ? form.quantity : 9999}
+                  placeholder="1"
+                  value={form.available_quantity}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const avail = Math.max(0, Number(e.target.value) || 0);
+                    const cleaned = e.target.value.replace(/^0+(?=\d)/, "");
+                    const avail = cleaned === "" ? "" : Number(cleaned);
                     setForm((prev) => ({
                       ...prev,
                       available_quantity: avail,
@@ -511,13 +624,13 @@ function RoomsAdminPage() {
                 />
               </label>
             </div>
-            {(form.available_quantity ?? 1) === 0 ? (
+            {form.available_quantity === 0 ? (
               <p className="text-xs text-destructive font-medium bg-destructive/10 p-2.5 rounded border border-destructive/20">
                 Notice: With 0 available rooms, this category will explicitly show as ALL OCCUPIED.
               </p>
             ) : (
               <p className="text-[11px] text-muted-foreground">
-                Guests will be able to book from the {form.available_quantity ?? 1} currently available room(s).
+                Guests will be able to book from the {form.available_quantity === "" ? (form.quantity === "" ? 1 : form.quantity) : form.available_quantity} currently available room(s).
               </p>
             )}
 
@@ -542,7 +655,14 @@ function RoomsAdminPage() {
                 min="1"
                 placeholder="2"
                 value={form.capacity}
-                onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/^0+(?=\d)/, "");
+                  setForm((prev) => ({
+                    ...prev,
+                    capacity: cleaned === "" ? "" : Number(cleaned),
+                  }));
+                }}
                 className="w-full border border-border p-3 text-sm"
               />
             </label>
@@ -555,7 +675,14 @@ function RoomsAdminPage() {
                 min="0"
                 placeholder="120"
                 value={form.price}
-                onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/^0+(?=\d)/, "");
+                  setForm((prev) => ({
+                    ...prev,
+                    price: cleaned === "" ? "" : Number(cleaned),
+                  }));
+                }}
                 className="w-full border border-border p-3 text-sm"
               />
             </label>
@@ -568,7 +695,14 @@ function RoomsAdminPage() {
                 min="1"
                 placeholder="1"
                 value={form.floor}
-                onChange={(e) => setForm({ ...form, floor: Number(e.target.value) })}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/^0+(?=\d)/, "");
+                  setForm((prev) => ({
+                    ...prev,
+                    floor: cleaned === "" ? "" : Number(cleaned),
+                  }));
+                }}
                 className="w-full border border-border p-3 text-sm"
               />
             </label>
@@ -600,7 +734,16 @@ function RoomsAdminPage() {
             </label>
 
             <div>
-              <label className="block text-sm text-forest-deep mb-2">Room image</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-forest-deep">
+                  Room Photos ({existingImages.length + newImageFiles.length})
+                </label>
+                <span className="text-[11px] text-muted-foreground">
+                  First photo is the cover photo
+                </span>
+              </div>
+
+              {/* Upload Dropzone */}
               <div
                 className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-6 px-4 transition-colors ${
                   isDragActive
@@ -615,21 +758,18 @@ function RoomsAdminPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragActive(false);
-                  const file = e.dataTransfer.files?.[0];
-                  if (file && file.type.startsWith("image/")) {
-                    setImageFile(file);
-                    setImagePreview(URL.createObjectURL(file));
+                  if (e.dataTransfer.files) {
+                    handleAddFiles(e.dataTransfer.files);
                   }
                 }}
               >
                 <input
                   type="file"
+                  multiple
                   accept="image/*"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
+                    if (e.target.files) {
+                      handleAddFiles(e.target.files);
                     }
                   }}
                   className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
@@ -639,22 +779,112 @@ function RoomsAdminPage() {
                     <UploadCloud className="h-5 w-5" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-forest-deep">Upload image</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Drag & drop or click</p>
+                    <p className="text-sm font-medium text-forest-deep">Upload multiple photos</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Select or drag & drop multiple pictures at once
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {(imagePreview || form.image_url) && (
-              <div className="overflow-hidden rounded-md border border-border">
-                <img
-                  src={imagePreview || form.image_url || ""}
-                  alt="Room preview"
-                  className="h-40 w-full object-cover"
-                />
-              </div>
-            )}
+              {/* Photo Gallery Preview Grid */}
+              {(existingImages.length > 0 || newImageFiles.length > 0) && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Gallery Preview ({existingImages.length + newImageFiles.length} photos)
+                    </p>
+                    <span className="text-[10px] text-muted-foreground">
+                      Hover photo to reorder or set cover
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-60 overflow-y-auto p-1.5 border border-border/80 rounded-lg bg-muted/5">
+                    {/* Existing Images */}
+                    {existingImages.map((src, idx) => (
+                      <div
+                        key={`existing-${idx}`}
+                        className="group/photo relative aspect-square rounded-md overflow-hidden border border-border bg-background shadow-xs"
+                      >
+                        <img src={src} alt="" className="h-full w-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 z-10 bg-gold text-gold-foreground text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase tracking-wider">
+                            Cover
+                          </span>
+                        )}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center gap-1 p-1">
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setCoverExisting(idx)}
+                              title="Set as cover photo"
+                              className="p-1 rounded bg-white/20 text-white hover:bg-gold hover:text-gold-foreground transition-colors"
+                            >
+                              <Star className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => moveExistingImage(idx, "left")}
+                              title="Move left"
+                              className="p-1 rounded bg-white/20 text-white hover:bg-white/40 transition-colors"
+                            >
+                              <ArrowLeft className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {idx < existingImages.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => moveExistingImage(idx, "right")}
+                              title="Move right"
+                              className="p-1 rounded bg-white/20 text-white hover:bg-white/40 transition-colors"
+                            >
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(idx)}
+                            title="Delete photo"
+                            className="p-1 rounded bg-destructive text-white hover:bg-destructive/80 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Newly Added Files */}
+                    {newImageFiles.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className="group/photo relative aspect-square rounded-md overflow-hidden border-2 border-dashed border-gold/70 bg-background shadow-xs"
+                      >
+                        <img src={item.preview} alt="" className="h-full w-full object-cover" />
+                        <span className="absolute top-1 right-1 z-10 bg-forest-deep text-white text-[8px] font-bold px-1 py-0.5 rounded shadow-xs uppercase">
+                          New
+                        </span>
+                        {existingImages.length === 0 && idx === 0 && (
+                          <span className="absolute top-1 left-1 z-10 bg-gold text-gold-foreground text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase tracking-wider">
+                            Cover
+                          </span>
+                        )}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center gap-1 p-1">
+                          <button
+                            type="button"
+                            onClick={() => removeNewFile(item.id)}
+                            title="Remove photo"
+                            className="p-1 rounded bg-destructive text-white hover:bg-destructive/80 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-3">
               <button
@@ -662,11 +892,15 @@ function RoomsAdminPage() {
                 disabled={
                   saveRoom.isPending ||
                   updateRoomMutation.isPending ||
-                  uploadImageMutation.isPending
+                  isUploadingImages
                 }
                 className="inline-flex items-center justify-center rounded bg-forest-deep px-5 py-3 text-xs uppercase tracking-[0.2em] text-white transition hover:bg-gold disabled:opacity-50"
               >
-                {editingRoomId ? "Update room" : "Save room"}
+                {isUploadingImages
+                  ? "Uploading photos..."
+                  : editingRoomId
+                    ? "Update room"
+                    : "Save room"}
               </button>
               <button
                 type="button"
@@ -736,6 +970,13 @@ function RoomsAdminPage() {
                   : totalQty;
             const isOccupied = r.status === "occupied" || availQty <= 0;
 
+            const roomImages =
+              r.images && Array.isArray(r.images) && r.images.length > 0
+                ? r.images
+                : r.image_url
+                  ? [r.image_url]
+                  : [];
+
             return (
               <article
                 key={r.id}
@@ -743,49 +984,46 @@ function RoomsAdminPage() {
                   isOccupied ? "border-destructive/40 bg-destructive/[0.015]" : "border-border"
                 }`}
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted/20">
-                  <label className="absolute left-4 top-4 z-10 inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/60 bg-background/80 shadow-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedRoomIds.includes(r.id)}
-                      onChange={() => toggleRoomSelection(r.id)}
-                      className="h-4 w-4 accent-forest-deep"
-                      aria-label={`Select room ${r.number}`}
-                    />
-                  </label>
-                  {r.image_url ? (
-                    <img
-                      src={r.image_url}
-                      alt={r.name ?? r.number}
-                      className="h-full w-full object-cover transition-transform duration-[1600ms] group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm uppercase tracking-[0.2em] text-muted-foreground">
-                      No image
+                <RoomImageSlider
+                  images={roomImages}
+                  alt={r.name ?? `Room ${r.number}`}
+                  aspectRatio="aspect-[4/3]"
+                  overlayBadges={
+                    <>
+                      <label className="absolute left-4 top-4 z-20 inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/60 bg-background/80 shadow-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedRoomIds.includes(r.id)}
+                          onChange={() => toggleRoomSelection(r.id)}
+                          className="h-4 w-4 accent-forest-deep cursor-pointer"
+                          aria-label={`Select room ${r.number}`}
+                        />
+                      </label>
+
+                      {/* Explicit Availability & Status Badge */}
+                      {isOccupied ? (
+                        <span className="absolute bottom-4 left-4 z-20 text-[10px] px-3 py-1 uppercase tracking-[0.2em] font-bold text-white shadow-md backdrop-blur-md bg-destructive">
+                          ALL OCCUPIED (0/{totalQty})
+                        </span>
+                      ) : (
+                        <span className="absolute bottom-4 left-4 z-20 text-[10px] px-3 py-1 uppercase tracking-[0.2em] font-semibold text-white shadow-sm backdrop-blur-md bg-emerald-600">
+                          {availQty} of {totalQty} AVAILABLE
+                        </span>
+                      )}
+                    </>
+                  }
+                  priceBadge={
+                    <div className="absolute bottom-4 right-4 z-20 bg-background/95 backdrop-blur-sm px-3.5 py-1.5 text-sm shadow-sm border border-border/40">
+                      <span className="font-semibold text-forest-deep">{formatBirr(r.price)}</span>
+                      <span className="text-xs text-muted-foreground">/night</span>
                     </div>
-                  )}
-
-                  {/* Explicit Availability & Status Badge */}
-                  {isOccupied ? (
-                    <span className="absolute top-4 left-4 text-[10px] px-3 py-1 uppercase tracking-[0.2em] font-bold text-white shadow-md backdrop-blur-md bg-destructive">
-                      ALL OCCUPIED (0/{totalQty})
-                    </span>
-                  ) : (
-                    <span className="absolute top-4 left-4 text-[10px] px-3 py-1 uppercase tracking-[0.2em] font-semibold text-white shadow-sm backdrop-blur-md bg-emerald-600">
-                      {availQty} of {totalQty} AVAILABLE
-                    </span>
-                  )}
-
-                  <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm px-4 py-2 text-sm">
-                    <span className="font-semibold text-forest-deep">{formatBirr(r.price)}</span>
-                    <span className="text-xs text-muted-foreground">/night</span>
-                  </div>
-                </div>
+                  }
+                />
 
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-gold font-semibold">
-                      {r.type} Room · Floor {r.floor}
+                      {(r.type.toLowerCase() === "suite" || r.type.toLowerCase().endsWith("room")) ? r.type : `${r.type} Room`} · Floor {r.floor}
                     </p>
                     <span
                       className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
@@ -852,13 +1090,15 @@ function RoomsAdminPage() {
                             description: r.description ?? "",
                             amenities: r.amenities ?? [],
                             image_url: r.image_url ?? "",
+                            images: roomImages,
                             beds: r.beds ?? null,
                             size_sqm: r.size_sqm ?? null,
                             popular: r.popular ?? null,
                             quantity: totalQty,
                             available_quantity: availQty,
-                          } as RoomInsert);
-                          setImagePreview(r.image_url ?? "");
+                          } as RoomFormData);
+                          setExistingImages(roomImages);
+                          setNewImageFiles([]);
                         }}
                         className="rounded-lg border border-border bg-muted/10 px-4 py-2 text-[10px] uppercase tracking-[0.2em] hover:bg-forest-deep hover:text-white transition-colors"
                       >

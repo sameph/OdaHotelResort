@@ -131,6 +131,13 @@ export default {
                 .single();
               const booking = bookingData as any;
               if (booking) {
+                try {
+                  const { decrementRoomAvailability } = await import("./lib/supabase-service");
+                  await decrementRoomAvailability(booking.roomSlug || booking.room, booking.roomType);
+                } catch (e) {
+                  console.warn("Could not decrement room availability from webhook:", e);
+                }
+
                 const { sendPaymentConfirmationEmail } = await import("./lib/email-service");
                 await sendPaymentConfirmationEmail(
                   booking.email,
@@ -155,6 +162,63 @@ export default {
       }
 
       const url = new URL(request.url);
+      if (url.pathname === "/api/upload-receipt" && request.method === "POST") {
+        try {
+          const formData = await request.formData();
+          const file = formData.get("file") as File | null;
+          if (!file) {
+            return new Response(JSON.stringify({ error: "Missing file" }), {
+              status: 400,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const timestamp = Date.now();
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `receipts/${timestamp}-${safeName}`;
+
+          const sKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          const sUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+          let client;
+          if (sKey && sUrl) {
+            const { createClient } = await import("@supabase/supabase-js");
+            client = createClient(sUrl, sKey, { auth: { persistSession: false } });
+          } else {
+            const { ensureSupabase } = await import("./lib/supabase");
+            client = ensureSupabase();
+          }
+
+          const { error: uploadError } = await client.storage
+            .from("room-images")
+            .upload(path, buffer, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error("Receipt upload error:", uploadError.message);
+            return new Response(JSON.stringify({ error: uploadError.message }), {
+              status: 500,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          const { data: pubData } = client.storage.from("room-images").getPublicUrl(path);
+          return new Response(JSON.stringify({ url: pubData.publicUrl }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        } catch (err: any) {
+          console.error("Failed to process receipt upload:", err);
+          return new Response(JSON.stringify({ error: err?.message || "Upload failed" }), {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          });
+        }
+      }
+
       if (url.pathname === "/api/invitations" || url.pathname.startsWith("/api/invitations/")) {
         return await handleInvitationsApi(request);
       }

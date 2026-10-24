@@ -13,6 +13,7 @@ create table if not exists public.rooms (
   floor integer not null default 1,
   description text,
   image_url text,
+  images text[] not null default '{}',
   amenities text[] not null default '{}',
   beds text,
   size_sqm integer,

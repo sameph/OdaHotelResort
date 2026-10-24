@@ -89,14 +89,14 @@ const defaultMenu: Record<
       title: "Berbere Lentil Soup",
       description:
         "Slow-simmered lentils finished with ginger, roasted garlic, lemon, and a whisper of smoky berbere.",
-      price: "Br 1,200",
+      price: "ETB 1,200",
       featured: true,
       allergens: ["Sesame", "Gluten"],
     },
     {
       title: "Chilli Citrus Chicken Skewers",
       description: "Chargrilled chicken with herb salad, injera crisps, and a citrus-chilli glaze.",
-      price: "Br 2,400",
+      price: "ETB 2,400",
       allergens: ["Dairy", "Sesame"],
     },
   ],
@@ -105,7 +105,7 @@ const defaultMenu: Record<
       title: "Rift Valley Lamb Roast",
       description:
         "Rosemary and berbere roasted lamb with roasted roots, mountain greens, and a red wine jus.",
-      price: "Br 4,800",
+      price: "ETB 4,800",
       featured: true,
       allergens: ["Gluten"],
     },
@@ -113,7 +113,7 @@ const defaultMenu: Record<
       title: "Coconut Fish Stew",
       description:
         "Fragrant turmeric and tomato fish stew with greens and a delicate chilli finish.",
-      price: "Br 3,700",
+      price: "ETB 3,700",
       allergens: ["Fish", "Shellfish"],
     },
   ],
@@ -122,7 +122,7 @@ const defaultMenu: Record<
       title: "Teff & Vegetable Platter",
       description:
         "A vibrant spread of lentils, roasted vegetables, chickpeas, greens, and fresh injera.",
-      price: "Br 2,900",
+      price: "ETB 2,900",
       allergens: ["Gluten"],
     },
   ],
@@ -130,14 +130,14 @@ const defaultMenu: Record<
     {
       title: "Cocoa-Cardamom Torte",
       description: "Dark cocoa sponge layered with cardamom cream and candied citrus.",
-      price: "Br 1,800",
+      price: "ETB 1,800",
       featured: true,
       allergens: ["Dairy", "Gluten"],
     },
     {
       title: "Honey Date Tart",
       description: "Date caramel, whipped mascarpone, toasted pistachio, and a crisp pastry shell.",
-      price: "Br 1,600",
+      price: "ETB 1,600",
       allergens: ["Dairy", "Nuts"],
     },
   ],
@@ -146,7 +146,7 @@ const defaultMenu: Record<
       title: "Single-Origin Ethiopian Coffee",
       description:
         "A fragrant coffee with floral aromatics and cocoa notes from Yirgacheffe or Sidamo.",
-      price: "Br 650",
+      price: "ETB 650",
       allergens: ["None"],
     },
   ],

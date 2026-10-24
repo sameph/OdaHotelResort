@@ -163,7 +163,11 @@ function MenuPage() {
                             </h3>
                             {item.price && (
                               <div className="text-gold font-semibold text-lg shrink-0">
-                                ETB {Number(item.price)}
+                                {item.price.toString().startsWith("ETB")
+                                  ? item.price
+                                  : !isNaN(Number(item.price.toString().replace(/[^0-9.]/g, "")))
+                                    ? `ETB ${Number(item.price.toString().replace(/[^0-9.]/g, "")).toLocaleString()}`
+                                    : item.price}
                               </div>
                             )}
                           </div>

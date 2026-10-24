@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, TrendingUp, TrendingDown, DollarSign, BedDouble, Users, CalendarCheck } from "lucide-react";
+import { ArrowUpRight, TrendingUp, TrendingDown, Banknote, BedDouble, Users, CalendarCheck } from "lucide-react";
 import {
   Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
   PieChart, Pie, Cell, Legend,
@@ -34,7 +34,7 @@ function AdminDashboard() {
   const monthBookings = (bookings ?? []).filter((b) => b.created_at?.slice(0, 7) === today.slice(0, 7));
   const monthRevenue = (bookings ?? []).filter((b) => b.status !== "cancelled" && b.checkIn?.slice(0, 7) === today.slice(0, 7)).reduce((sum, b) => sum + b.total, 0);
   const kpis = [
-    { label: "Revenue (MTD)", value: `Br ${monthRevenue.toLocaleString()}`, icon: DollarSign },
+    { label: "Revenue (MTD)", value: `ETB ${monthRevenue.toLocaleString()}`, icon: Banknote },
     { label: "Occupied rooms", value: `${activeBookings.length} / ${rooms?.length ?? 0}`, icon: BedDouble },
     { label: "New bookings", value: String(monthBookings.length), icon: CalendarCheck },
     { label: "Active guests", value: String(activeBookings.reduce((sum, b) => sum + b.guests, 0)), icon: Users },
@@ -154,7 +154,7 @@ function AdminDashboard() {
                   <td className="px-6 py-3">{b.roomType} · #{b.room}</td>
                   <td className="px-6 py-3">{b.checkIn}</td>
                   <td className="px-6 py-3">{b.nights}</td>
-                  <td className="px-6 py-3 text-right font-medium">${b.total.toLocaleString()}</td>
+                  <td className="px-6 py-3 text-right font-medium">ETB {b.total.toLocaleString()}</td>
                   <td className="px-6 py-3"><StatusPill status={b.status} /></td>
                 </tr>
               ))}

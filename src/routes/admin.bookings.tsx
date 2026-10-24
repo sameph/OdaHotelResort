@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Filter, Plus } from "lucide-react";
+import { Filter, Plus, FileText, Check, ExternalLink, X, Landmark, Eye, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Pagination,
   PaginationContent,
@@ -34,6 +35,7 @@ function BookingsPage() {
   const [roomType, setRoomType] = useState<string>("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [viewingReceiptBooking, setViewingReceiptBooking] = useState<BookingRow | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery<BookingRow[], Error>({
@@ -48,12 +50,31 @@ function BookingsPage() {
   const updateStatus = useMutation({
     mutationFn: ({ id, nextStatus }: { id: number; nextStatus: string }) =>
       updateBookingStatus(id, nextStatus),
-    onSuccess: () => {
+    onSuccess: (data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["bookings"] });
       void queryClient.invalidateQueries({ queryKey: ["analytics"] });
       void queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      if (vars.nextStatus === "confirmed") {
+        toast.success(
+          `Booking ${data.ref || `#${data.id}`} confirmed! 1 room deducted from inventory.`,
+        );
+      } else {
+        toast.success(`Booking status updated to ${vars.nextStatus}.`);
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to update booking status.");
     },
   });
+
+  function getReceiptUrl(b: BookingRow): string | null {
+    if (b.receipt_url) return b.receipt_url;
+    if (b.requests) {
+      const match = b.requests.match(/\[Receipt:\s*([^\]]+)\]/i);
+      if (match && match[1]) return match[1].trim();
+    }
+    return null;
+  }
 
   const filtered = useMemo(
     () =>
@@ -168,50 +189,94 @@ function BookingsPage() {
                   <th className="text-left px-6 py-3">Check-in</th>
                   <th className="text-left px-6 py-3">Check-out</th>
                   <th className="text-center px-6 py-3">Guests</th>
-                  <th className="text-left px-6 py-3">Source</th>
+                  <th className="text-left px-6 py-3">Payment & Receipt</th>
                   <th className="text-right px-6 py-3">Total</th>
-                  <th className="text-left px-6 py-3">Status</th>
+                  <th className="text-left px-6 py-3">Status & Action</th>
                 </tr>
               </thead>
               <tbody>
-                {visibleRows.map((b) => (
-                  <tr key={b.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-6 py-3 font-mono text-xs">{b.id}</td>
-                    <td className="px-6 py-3">
-                      <div className="font-medium">{b.guest}</div>
-                      <div className="text-xs text-muted-foreground">{b.email}</div>
-                    </td>
-                    <td className="px-6 py-3">
-                      {b.roomType} · #{b.room}
-                    </td>
-                    <td className="px-6 py-3">{b.checkIn}</td>
-                    <td className="px-6 py-3">{b.checkOut}</td>
-                    <td className="px-6 py-3 text-center">{b.guests}</td>
-                    <td className="px-6 py-3">{b.source}</td>
-                    <td className="px-6 py-3 text-right font-medium">
-                      ${b.total.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-3">
-                      <select
-                        aria-label={`Status for booking ${b.ref || b.id}`}
-                        value={b.status}
-                        onChange={(e) =>
-                          updateStatus.mutate({
-                            id: b.id,
-                            nextStatus: e.target.value,
-                          })
-                        }
-                        className={`${pill(b.status)} bg-transparent`}
-                      >
-                        {STATUSES.slice(1).map((option) => (
-                          <option key={option} value={option}>
-                            {option.replace("-", " ")}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
+                {visibleRows.map((b) => {
+                  const receiptUrl = getReceiptUrl(b);
+                  return (
+                    <tr key={b.id} className="border-t border-border hover:bg-muted/30">
+                      <td className="px-6 py-3 font-mono text-xs">{b.ref || b.id}</td>
+                      <td className="px-6 py-3">
+                        <div className="font-medium text-forest-deep">{b.guest}</div>
+                        <div className="text-xs text-muted-foreground">{b.email}</div>
+                        {b.phone && <div className="text-[11px] text-muted-foreground">{b.phone}</div>}
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="font-medium">{b.roomType}</div>
+                        <div className="text-xs text-muted-foreground">#{b.room}</div>
+                      </td>
+                      <td className="px-6 py-3">{b.checkIn}</td>
+                      <td className="px-6 py-3">{b.checkOut}</td>
+                      <td className="px-6 py-3 text-center">{b.guests}</td>
+                      <td className="px-6 py-3">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-xs font-medium capitalize">
+                            {b.paymentMethod === "transfer"
+                              ? "Bank Transfer (CBE)"
+                              : b.paymentMethod === "onarrival"
+                                ? "Pay on Arrival"
+                                : b.paymentMethod === "chapa"
+                                  ? "Online (Chapa)"
+                                  : b.paymentMethod || b.source}
+                          </span>
+                          {receiptUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => setViewingReceiptBooking(b)}
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold rounded bg-gold/15 text-gold-foreground border border-gold/40 hover:bg-gold hover:text-white transition-colors"
+                            >
+                              <FileText className="h-3 w-3" /> View Receipt
+                            </button>
+                          ) : b.paymentMethod === "transfer" ? (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              No slip uploaded
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right font-medium">
+                        ETB {b.total.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <select
+                            aria-label={`Status for booking ${b.ref || b.id}`}
+                            value={b.status}
+                            onChange={(e) =>
+                              updateStatus.mutate({
+                                id: b.id,
+                                nextStatus: e.target.value,
+                              })
+                            }
+                            className={`${pill(b.status)} bg-transparent rounded cursor-pointer`}
+                          >
+                            {STATUSES.slice(1).map((option) => (
+                              <option key={option} value={option}>
+                                {option.replace("-", " ")}
+                              </option>
+                            ))}
+                          </select>
+                          {b.status === "pending" && b.paymentMethod === "transfer" && (
+                            <button
+                              type="button"
+                              title="Approve Bank Transfer and Confirm Room (24h window)"
+                              onClick={() =>
+                                updateStatus.mutate({ id: b.id, nextStatus: "confirmed" })
+                              }
+                              className="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shrink-0 flex items-center gap-1 shadow-xs"
+                            >
+                              <Check className="h-3 w-3" /> Approve
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {visibleRows.length === 0 && (
                   <tr>
                     <td colSpan={9} className="px-6 py-12 text-center text-muted-foreground">
@@ -267,6 +332,132 @@ function BookingsPage() {
           {updateStatus.error && (
             <p className="p-4 text-sm text-destructive">{updateStatus.error.message}</p>
           )}
+        </div>
+      )}
+
+      {/* Bank Transfer Receipt Modal */}
+      {viewingReceiptBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-2xl bg-background border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-2">
+                <Landmark className="h-5 w-5 text-gold" />
+                <div>
+                  <h3 className="font-serif text-lg text-forest-deep font-semibold">
+                    Bank Transfer Receipt Verification
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Booking Ref: {viewingReceiptBooking.ref || `#${viewingReceiptBooking.id}`} · Account: 1000603302072 (CBE)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingReceiptBooking(null)}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-muted/20 rounded-lg text-xs">
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Guest</span>
+                  <span className="font-medium text-forest-deep">{viewingReceiptBooking.guest}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Room</span>
+                  <span className="font-medium text-forest-deep">{viewingReceiptBooking.roomType}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Amount Due</span>
+                  <span className="font-bold text-forest-deep">ETB {viewingReceiptBooking.total.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Current Status</span>
+                  <span className={pill(viewingReceiptBooking.status)}>{viewingReceiptBooking.status}</span>
+                </div>
+              </div>
+
+              {/* Receipt Preview */}
+              <div className="rounded-xl border border-border bg-black/5 p-4 flex flex-col items-center justify-center min-h-[280px]">
+                {(() => {
+                  const url = getReceiptUrl(viewingReceiptBooking);
+                  if (!url) {
+                    return (
+                      <p className="text-sm text-muted-foreground">No receipt file uploaded for this booking.</p>
+                    );
+                  }
+
+                  const isPdf = url.toLowerCase().includes(".pdf");
+                  if (isPdf) {
+                    return (
+                      <div className="text-center space-y-3 py-8">
+                        <FileText className="h-12 w-12 text-forest-deep mx-auto" />
+                        <p className="text-sm font-medium">PDF Document Receipt</p>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-forest-deep text-white text-xs font-semibold uppercase tracking-wider rounded hover:bg-gold hover:text-gold-foreground transition-colors"
+                        >
+                          <ExternalLink className="h-4 w-4" /> Open PDF in New Tab
+                        </a>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="w-full flex flex-col items-center gap-3">
+                      <img
+                        src={url}
+                        alt="Transfer Receipt"
+                        className="max-h-[50vh] max-w-full rounded-lg border border-border object-contain shadow-sm"
+                      />
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-gold hover:text-forest-deep underline underline-offset-2"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" /> Open Full-Resolution Image
+                      </a>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-900 leading-relaxed">
+                <strong>24-Hour Approval Policy:</strong> Once you verify the deposit against account <strong>1000603302072</strong>, click <em>Approve & Confirm Room</em> below. This will transition the status to Confirmed and deduct 1 room from category availability.
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setViewingReceiptBooking(null)}
+                className="px-4 py-2 text-xs uppercase tracking-wider border border-border rounded hover:bg-muted text-muted-foreground"
+              >
+                Close
+              </button>
+              {viewingReceiptBooking.status !== "confirmed" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateStatus.mutate({
+                      id: viewingReceiptBooking.id,
+                      nextStatus: "confirmed",
+                    });
+                    setViewingReceiptBooking(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold uppercase tracking-wider bg-emerald-700 text-white rounded hover:bg-emerald-800 transition-colors shadow-sm"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Approve & Confirm Room
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

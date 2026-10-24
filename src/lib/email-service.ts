@@ -35,7 +35,7 @@ export async function sendPaymentConfirmationEmail(
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a3c34;">
       <h2 style="color: #1a3c34; border-bottom: 2px solid #ceb373; padding-bottom: 10px;">Booking Confirmation</h2>
       <p>Dear ${guestName},</p>
-      <p>Your payment of <strong>Br ${amount.toLocaleString()}</strong> has been successfully processed! Your booking is now confirmed.</p>
+      <p>Your payment of <strong>ETB ${amount.toLocaleString()}</strong> has been successfully processed! Your booking is now confirmed.</p>
       
       <div style="background-color: #fcf9f2; padding: 20px; border: 1px solid #e2d8c3; border-radius: 4px; margin-top: 20px;">
         <h3 style="margin-top: 0;">Reservation Details:</h3>

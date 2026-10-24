@@ -235,7 +235,7 @@ function GuestsPage() {
                   </div>
                   <div>
                     <div className="font-serif text-xl text-forest-deep">
-                      ${(g.totalSpend / 1000).toFixed(1)}k
+                      ETB {(g.totalSpend / 1000).toFixed(1)}k
                     </div>
                     <div className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground mt-0.5">
                       Lifetime

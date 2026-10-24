@@ -309,7 +309,7 @@ function OffersAdminPage() {
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                     className="w-full rounded-xl border border-border/80 bg-background/50 px-4 py-3 text-sm focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all placeholder:text-muted-foreground/50"
-                    placeholder="Br 42,000"
+                    placeholder="ETB 42,000"
                   />
                 </label>
                 <label className="block text-sm">

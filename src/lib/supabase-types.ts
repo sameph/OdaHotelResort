@@ -21,6 +21,7 @@ export interface BookingRow {
   total: number;
   paymentMethod: string;
   status: string;
+  receipt_url?: string | null;
   source: string;
   created_at: string;
 }
@@ -44,6 +45,7 @@ export interface BookingInsert {
   tax: number;
   total: number;
   paymentMethod: string;
+  receipt_url?: string | null;
   status?: string;
   source?: string;
 }
@@ -84,6 +86,7 @@ export interface RoomRow {
   name?: string | null;
   description?: string | null;
   image_url?: string | null;
+  images?: string[] | null;
   amenities?: string[] | null;
   beds?: string | null;
   size_sqm?: number | null;
@@ -181,6 +184,7 @@ export interface RoomInsert {
   name?: string | null;
   description?: string | null;
   image_url?: string | null;
+  images?: string[] | null;
   amenities?: string[] | null;
   beds?: string | null;
   size_sqm?: number | null;

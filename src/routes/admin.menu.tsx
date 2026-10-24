@@ -285,7 +285,7 @@ function MenuAdminPage() {
                     value={form.price}
                     onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                     className="w-full rounded-xl border border-border/80 bg-background/50 px-4 py-3 text-sm outline-none transition-all focus:border-gold focus:ring-1 focus:ring-gold"
-                    placeholder="Br 1,500"
+                    placeholder="ETB 1,500"
                   />
                 </label>
               </div>

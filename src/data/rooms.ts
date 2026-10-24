@@ -7,7 +7,7 @@ const poolImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/publ
 
 export const ROOM_CATEGORIES = ["Standard", "Twin", "Suite", "Family", "King"] as const;
 export type RoomCategory = (typeof ROOM_CATEGORIES)[number];
-export type RoomType = RoomCategory | "Deluxe" | "Villa";
+export type RoomType = RoomCategory;
 export type RoomView = "Rift Valley View" | "Garden View" | "Pool View";
 export type RoomAmenity =
   | "King-size bed"
@@ -30,6 +30,7 @@ export type Room = {
   type: RoomType;
   view: RoomView;
   img: string;
+  images?: string[];
   size: string;
   sizeSqm: number;
   beds: string;
@@ -51,6 +52,7 @@ export const rooms: Room[] = [
     type: "Suite",
     view: "Rift Valley View",
     img: roomPresidential,
+    images: [roomPresidential, roomExecutive, roomGarden, poolImg],
     size: "120 m²",
     sizeSqm: 120,
     beds: "1 King Bed",
@@ -67,6 +69,7 @@ export const rooms: Room[] = [
     type: "Suite",
     view: "Garden View",
     img: roomExecutive,
+    images: [roomExecutive, roomPresidential, roomDeluxe],
     size: "85 m²",
     sizeSqm: 85,
     beds: "1 King Bed + Sofa Bed",
@@ -80,9 +83,10 @@ export const rooms: Room[] = [
   {
     slug: "deluxe-king",
     name: "Deluxe King Room",
-    type: "Deluxe",
+    type: "King",
     view: "Garden View",
     img: roomDeluxe,
+    images: [roomDeluxe, roomGarden, poolImg],
     size: "48 m²",
     sizeSqm: 48,
     beds: "1 King Bed",
@@ -94,25 +98,27 @@ export const rooms: Room[] = [
   },
   {
     slug: "garden-villa",
-    name: "Garden Villa",
-    type: "Villa",
+    name: "Garden Standard Room",
+    type: "Standard",
     view: "Garden View",
     img: roomGarden,
+    images: [roomGarden, roomExecutive, poolImg],
     size: "95 m²",
     sizeSqm: 95,
-    beds: "1 King Bed",
+    beds: "1 Queen Bed",
     guests: 2,
-    price: 14000,
-    amenities: ["King-size bed", "Private terrace", "Soaking tub", "Mini bar", "Free WiFi"],
+    price: 5500,
+    amenities: ["Queen-size bed", "Private terrace", "Soaking tub", "Mini bar", "Free WiFi"],
     tags: ["Private terrace", "Soaking tub", "Garden"],
-    desc: "Standalone villa nestled among our lush gardens with private terrace and outdoor soaking tub.",
+    desc: "Standalone peaceful room nestled among our lush gardens with private terrace and outdoor soaking tub.",
   },
   {
     slug: "family-villa",
-    name: "Family Villa",
-    type: "Villa",
+    name: "Family Suite Villa",
+    type: "Family",
     view: "Pool View",
     img: roomFamily,
+    images: [roomFamily, roomGarden, poolImg],
     size: "140 m²",
     sizeSqm: 140,
     beds: "2 Queen Beds + Sofa Bed",
@@ -125,9 +131,10 @@ export const rooms: Room[] = [
   {
     slug: "twin-comfort",
     name: "Twin Comfort Room",
-    type: "Deluxe",
+    type: "Twin",
     view: "Pool View",
     img: poolImg,
+    images: [poolImg, roomDeluxe, roomGarden],
     size: "42 m²",
     sizeSqm: 42,
     beds: "2 Twin Beds",
