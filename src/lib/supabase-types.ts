@@ -88,6 +88,8 @@ export interface RoomRow {
   beds?: string | null;
   size_sqm?: number | null;
   popular?: boolean | null;
+  quantity?: number | null;
+  available_quantity?: number | null;
 }
 
 export interface GalleryRow {
@@ -183,6 +185,8 @@ export interface RoomInsert {
   beds?: string | null;
   size_sqm?: number | null;
   popular?: boolean | null;
+  quantity?: number | null;
+  available_quantity?: number | null;
 }
 
 export interface MenuItemRow {

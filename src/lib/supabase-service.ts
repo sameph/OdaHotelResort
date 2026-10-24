@@ -19,6 +19,14 @@ import type {
 
 export async function uploadImage(file: File, bucket: string, folder: string): Promise<string> {
   const supabase = ensureSupabase();
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error(
+      "Please sign in again as an authorized admin before uploading images. Storage uploads require an authenticated session.",
+    );
+  }
+
   const timestamp = Date.now();
   const filename = `${timestamp}-${file.name}`;
   const path = `${folder}/${filename}`;
@@ -43,6 +51,13 @@ export async function insertBooking(booking: BookingInsert): Promise<BookingRow>
 
   if (error) {
     throw error;
+  }
+
+  // Reduce available quantity for this room category
+  try {
+    await decrementRoomAvailability(booking.roomSlug || booking.room, booking.roomType);
+  } catch (err) {
+    console.warn("Could not decrement room availability:", err);
   }
 
   return data as BookingRow;
@@ -97,8 +112,54 @@ export async function insertGalleryImage(image: GalleryInsert): Promise<GalleryR
 }
 
 export async function deleteGalleryImage(id: number): Promise<void> {
-  const { error } = await ensureSupabase().from("gallery_images").delete().eq("id", id);
+  const supabase = ensureSupabase();
+
+  const { data: galleryImage, error: fetchError } = await (supabase.from("gallery_images") as any)
+    .select("src")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  if (galleryImage && (galleryImage as { src?: string }).src) {
+    try {
+      const storageTarget = getStorageObjectPathFromUrl(galleryImage.src);
+      if (storageTarget) {
+        const { error: storageError } = await supabase.storage
+          .from(storageTarget.bucket)
+          .remove([storageTarget.path]);
+
+        if (storageError) {
+          console.warn("Gallery image storage cleanup failed:", storageError.message);
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to parse gallery image storage URL:", error);
+    }
+  }
+
+  const { error } = await supabase.from("gallery_images").delete().eq("id", id);
   if (error) throw error;
+}
+
+function getStorageObjectPathFromUrl(url: string): { bucket: string; path: string } | null {
+  try {
+    const pathname = decodeURIComponent(new URL(url).pathname);
+    const match = pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+
+    if (!match) return null;
+
+    const bucket = match[1];
+    const path = match[2];
+
+    if (!bucket || !path) return null;
+
+    return { bucket, path };
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchGuests(): Promise<GuestRow[]> {
@@ -148,39 +209,279 @@ export async function fetchRooms(): Promise<RoomRow[]> {
 }
 
 export async function createRoom(room: RoomInsert): Promise<RoomRow> {
-  const { data, error } = await ensureSupabase()
-    .from("rooms")
-    .insert(room as never)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as RoomRow;
+  const supabase = ensureSupabase();
+  const payload = { ...room };
+  if (payload.available_quantity !== undefined && payload.available_quantity !== null) {
+    if (payload.available_quantity <= 0) {
+      payload.status = "occupied";
+    } else if (payload.status === "occupied") {
+      payload.status = "available";
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("rooms")
+      .insert(payload as never)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RoomRow;
+  } catch (err: any) {
+    if (err?.message?.includes("quantity")) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.quantity;
+      delete fallbackPayload.available_quantity;
+      const { data, error } = await supabase
+        .from("rooms")
+        .insert(fallbackPayload as never)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as RoomRow;
+    }
+    throw err;
+  }
 }
 
 export async function updateRoom(id: number, room: Partial<RoomInsert>): Promise<RoomRow> {
-  const { data, error } = await ensureSupabase()
-    .from("rooms")
-    .update(room as never)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as RoomRow;
+  const supabase = ensureSupabase();
+  const payload = { ...room };
+  if (payload.available_quantity !== undefined && payload.available_quantity !== null) {
+    if (payload.available_quantity <= 0) {
+      payload.status = "occupied";
+    } else if (payload.status === "occupied") {
+      payload.status = "available";
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("rooms")
+      .update(payload as never)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RoomRow;
+  } catch (err: any) {
+    if (err?.message?.includes("quantity")) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.quantity;
+      delete fallbackPayload.available_quantity;
+      const { data, error } = await supabase
+        .from("rooms")
+        .update(fallbackPayload as never)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as RoomRow;
+    }
+    throw err;
+  }
 }
 
 export async function deleteRoom(id: number): Promise<void> {
-  const { error } = await ensureSupabase().from("rooms").delete().eq("id", id);
+  const supabase = ensureSupabase();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error("Please sign in as an admin before deleting a room.");
+  }
+
+  const { error } = await supabase.from("rooms").delete().eq("id", id);
   if (error) throw error;
 }
 
+export async function deleteRooms(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+
+  const supabase = ensureSupabase();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error("Please sign in as an admin before deleting rooms.");
+  }
+
+  const { error } = await supabase.from("rooms").delete().in("id", ids);
+  if (error) throw error;
+}
+
+export async function deleteContact(id: number): Promise<void> {
+  const supabase = ensureSupabase();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error("Please sign in as an admin before deleting a message.");
+  }
+
+  const { error } = await supabase.from("contacts").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteContacts(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+
+  const supabase = ensureSupabase();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error("Please sign in as an admin before deleting messages.");
+  }
+
+  const { error } = await supabase.from("contacts").delete().in("id", ids);
+  if (error) throw error;
+}
+
+export async function deleteBookingsByEmails(emails: string[]): Promise<void> {
+  if (!emails.length) return;
+
+  const supabase = ensureSupabase();
+  const candidateFields = ["email", "guest_email"] as const;
+  let lastError: Error | null = null;
+
+  for (const field of candidateFields) {
+    const { error } = await supabase.from("bookings").delete().in(field, emails);
+    if (!error) return;
+    lastError = new Error(error.message);
+  }
+
+  throw lastError ?? new Error("Unable to delete the selected guest records.");
+}
+
+export async function decrementRoomAvailability(
+  roomIdentifier?: string,
+  roomType?: string,
+  count = 1,
+): Promise<void> {
+  const supabase = ensureSupabase();
+  const { data: rooms } = await supabase.from("rooms").select("*");
+  if (!rooms || rooms.length === 0) return;
+
+  const target = rooms.find((r: RoomRow) => {
+    if (
+      roomIdentifier &&
+      (r.slug === roomIdentifier ||
+        r.name?.toLowerCase() === roomIdentifier.toLowerCase() ||
+        r.number === roomIdentifier)
+    ) {
+      return true;
+    }
+    if (roomType && r.type?.toLowerCase() === roomType.toLowerCase()) {
+      return true;
+    }
+    return false;
+  });
+
+  if (!target) return;
+
+  const currentTotal = target.quantity ?? 1;
+  const currentAvail =
+    target.available_quantity !== undefined && target.available_quantity !== null
+      ? target.available_quantity
+      : target.status === "occupied"
+        ? 0
+        : currentTotal;
+
+  const nextAvail = Math.max(0, currentAvail - count);
+  const nextStatus = nextAvail === 0 ? "occupied" : target.status;
+
+  try {
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        available_quantity: nextAvail,
+        status: nextStatus,
+      } as never)
+      .eq("id", target.id);
+
+    if (error && error.message.includes("available_quantity")) {
+      await supabase.from("rooms").update({ status: nextStatus } as never).eq("id", target.id);
+    }
+  } catch (err) {
+    console.warn("Could not decrement room availability:", err);
+  }
+}
+
+export async function incrementRoomAvailability(
+  roomIdentifier?: string,
+  roomType?: string,
+  count = 1,
+): Promise<void> {
+  const supabase = ensureSupabase();
+  const { data: rooms } = await supabase.from("rooms").select("*");
+  if (!rooms || rooms.length === 0) return;
+
+  const target = rooms.find((r: RoomRow) => {
+    if (
+      roomIdentifier &&
+      (r.slug === roomIdentifier ||
+        r.name?.toLowerCase() === roomIdentifier.toLowerCase() ||
+        r.number === roomIdentifier)
+    ) {
+      return true;
+    }
+    if (roomType && r.type?.toLowerCase() === roomType.toLowerCase()) {
+      return true;
+    }
+    return false;
+  });
+
+  if (!target) return;
+
+  const currentTotal = target.quantity ?? 1;
+  const currentAvail =
+    target.available_quantity !== undefined && target.available_quantity !== null
+      ? target.available_quantity
+      : target.status === "occupied"
+        ? 0
+        : currentTotal;
+
+  const nextAvail = Math.min(currentTotal, currentAvail + count);
+  const nextStatus = nextAvail > 0 && target.status === "occupied" ? "available" : target.status;
+
+  try {
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        available_quantity: nextAvail,
+        status: nextStatus,
+      } as never)
+      .eq("id", target.id);
+
+    if (error && error.message.includes("available_quantity")) {
+      await supabase.from("rooms").update({ status: nextStatus } as never).eq("id", target.id);
+    }
+  } catch (err) {
+    console.warn("Could not increment room availability:", err);
+  }
+}
+
 export async function updateBookingStatus(id: number, status: string): Promise<BookingRow> {
-  const { data, error } = await ensureSupabase()
+  const supabase = ensureSupabase();
+  const { data: currentBooking } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  const { data, error } = await supabase
     .from("bookings")
     .update({ status } as never)
     .eq("id", id)
     .select()
     .single();
   if (error) throw error;
+
+  // When a reservation is cancelled, restore 1 unit back to room category availability
+  if (status === "cancelled" && currentBooking?.status !== "cancelled") {
+    try {
+      await incrementRoomAvailability(
+        currentBooking?.roomSlug || currentBooking?.room,
+        currentBooking?.roomType,
+      );
+    } catch (err) {
+      console.warn("Failed to restore room availability on cancellation:", err);
+    }
+  }
+
   return data as BookingRow;
 }
 
@@ -272,16 +573,24 @@ export async function checkAvailability(checkIn: string, checkOut: string): Prom
       r.name?.toLowerCase().replace(/\s+/g, "-") ||
       r.type?.toLowerCase().replace(/\s+/g, "-");
     if (id) {
-      // Assuming 'maintenance' means it's not available to book.
-      if (r.status !== "maintenance") {
-        inventory[id] = (inventory[id] || 0) + 1;
+      const avail =
+        r.available_quantity !== undefined && r.available_quantity !== null
+          ? r.available_quantity
+          : r.status === "occupied"
+            ? 0
+            : (r.quantity ?? 1);
+
+      if (r.status !== "maintenance" && r.status !== "occupied" && avail > 0) {
+        inventory[id] = avail;
+      } else {
+        inventory[id] = 0;
       }
     }
   });
 
   overlapping.forEach((b) => {
     const id = b.roomSlug || b.roomType?.toLowerCase().replace(/\s+/g, "-");
-    if (id && inventory[id] !== undefined) {
+    if (id && inventory[id] !== undefined && inventory[id] > 0) {
       inventory[id]--;
     }
   });
@@ -343,6 +652,12 @@ export async function updateOffer(id: number, payload: Partial<OfferInsert>): Pr
 
 export async function deleteOffer(id: number): Promise<void> {
   const { error } = await ensureSupabase().from("offers").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteOffers(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+  const { error } = await ensureSupabase().from("offers").delete().in("id", ids);
   if (error) throw new Error(error.message);
 }
 
@@ -488,5 +803,11 @@ export async function updateMenuItem(
 
 export async function deleteMenuItem(id: number): Promise<void> {
   const { error } = await ensureSupabase().from("food_menu").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteMenuItems(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+  const { error } = await ensureSupabase().from("food_menu").delete().in("id", ids);
   if (error) throw new Error(error.message);
 }

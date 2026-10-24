@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, type FormEvent } from "react";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, UploadCloud, X, Box } from "lucide-react";
 import {
@@ -7,9 +8,11 @@ import {
   createOffer,
   updateOffer,
   deleteOffer,
+  deleteOffers,
   uploadImage,
 } from "@/lib/supabase-service";
 import type { OfferRow, OfferInsert } from "@/lib/supabase-types";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/admin/offers")({
   component: OffersAdminPage,
@@ -61,6 +64,84 @@ function OffersAdminPage() {
     },
   });
 
+  const deleteOffersMutation = useMutation({
+    mutationFn: deleteOffers,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Offer deletion failed. Please try again.");
+    },
+  });
+
+  const [selectedOfferIds, setSelectedOfferIds] = useState<number[]>([]);
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", description: "", onConfirm: () => {} });
+
+  const selectedVisibleOfferIds = offers.map((offer) => offer.id);
+  const allVisibleOffersSelected =
+    offers.length > 0 && selectedVisibleOfferIds.every((id) => selectedOfferIds.includes(id));
+
+  const toggleOfferSelection = (id: number) => {
+    setSelectedOfferIds((current) =>
+      current.includes(id) ? current.filter((offerId) => offerId !== id) : [...current, id],
+    );
+  };
+
+  const toggleSelectAllOffers = () => {
+    setSelectedOfferIds((current) => {
+      if (offers.length === 0) return current;
+      const nextIds = new Set(current);
+      if (allVisibleOffersSelected) {
+        for (const id of selectedVisibleOfferIds) nextIds.delete(id);
+      } else {
+        for (const id of selectedVisibleOfferIds) nextIds.add(id);
+      }
+      return Array.from(nextIds);
+    });
+  };
+
+  const deleteSelectedOffers = async () => {
+    const ids = offers
+      .filter((offer) => selectedOfferIds.includes(offer.id))
+      .map((offer) => offer.id);
+    if (!ids.length) {
+      toast.warning("Select at least one offer before deleting.");
+      return;
+    }
+
+    const offerTitles = offers
+      .filter((offer) => ids.includes(offer.id))
+      .map((offer) => offer.title)
+      .slice(0, 3)
+      .join(", ");
+    const extra = ids.length > 3 ? ` and ${ids.length - 3} more offer(s)` : "";
+    setConfirmDialog({
+      open: true,
+      title: `Delete ${ids.length} Offer${ids.length > 1 ? "s" : ""}`,
+      description: `This will permanently remove ${offerTitles || "the selected offer"}${extra} from the public offers list. This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog((d) => ({ ...d, open: false }));
+        try {
+          setBulkDeletePending(true);
+          await deleteOffersMutation.mutateAsync(ids);
+          setSelectedOfferIds([]);
+          toast.success(`Deleted ${ids.length} offer${ids.length > 1 ? "s" : ""} successfully.`);
+        } catch (error: any) {
+          console.error("Offer bulk delete failed:", error);
+          toast.error(error?.message || "Unable to delete the selected offers. Please try again.");
+        } finally {
+          setBulkDeletePending(false);
+        }
+      },
+    });
+  };
+
   const resetForm = () => {
     setEditingOfferId(null);
     setForm({
@@ -96,7 +177,7 @@ function OffersAdminPage() {
       setForm((prev) => ({ ...prev, image_url: url }));
       setImagePreview(url);
     } catch (err: any) {
-      alert("Upload failed: " + err.message);
+      toast.error("Upload failed: " + err.message);
     } finally {
       setIsUploading(false);
     }
@@ -119,7 +200,7 @@ function OffersAdminPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (form.perks.length === 0) {
-      alert("Please add at least one perk/feature.");
+      toast.warning("Please add at least one perk/feature.");
       return;
     }
     saveOffer.mutate(form);
@@ -130,18 +211,49 @@ function OffersAdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-3xl text-forest-deep tracking-tight">Active Offers</h1>
         {!showForm && (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-forest-deep px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-soft hover:bg-gold hover:shadow-luxury transition-all duration-300"
-          >
-            <Plus className="h-4 w-4" /> Add Offer
-          </button>
+          <div className="flex items-center gap-3">
+            {selectedOfferIds.length > 0 && (
+              <button
+                type="button"
+                onClick={deleteSelectedOffers}
+                disabled={bulkDeletePending}
+                className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-destructive hover:bg-destructive hover:text-white transition-colors disabled:opacity-50"
+              >
+                {bulkDeletePending ? "Deleting..." : `Delete selected (${selectedOfferIds.length})`}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-forest-deep px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-soft hover:bg-gold hover:shadow-luxury transition-all duration-300"
+            >
+              <Plus className="h-4 w-4" /> Add Offer
+            </button>
+          </div>
         )}
       </div>
 
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-4 py-3 text-sm">
+        <label className="inline-flex items-center gap-3 text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={offers.length > 0 && allVisibleOffersSelected}
+            onChange={toggleSelectAllOffers}
+            className="h-4 w-4 accent-forest-deep"
+            aria-label="Select all visible offers"
+          />
+          <span>Select all visible</span>
+        </label>
+        <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          {selectedOfferIds.length} selected
+        </span>
+      </div>
+
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-10 bg-background/50 border border-border/80 backdrop-blur-md rounded-[2rem] p-8 shadow-luxury animate-fade-down relative overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-10 bg-background/50 border border-border/80 backdrop-blur-md rounded-[2rem] p-8 shadow-luxury animate-fade-down relative overflow-hidden"
+        >
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gold/40 via-forest/40 to-gold/40" />
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
             <h2 className="font-serif text-2xl text-forest-deep">
@@ -163,7 +275,9 @@ function OffersAdminPage() {
             <div className="space-y-6">
               <div className="grid gap-6 grid-cols-2">
                 <label className="block text-sm">
-                  <span className="mb-2 block font-medium text-forest-deep">Tagline / Category</span>
+                  <span className="mb-2 block font-medium text-forest-deep">
+                    Tagline / Category
+                  </span>
                   <input
                     required
                     type="text"
@@ -213,7 +327,9 @@ function OffersAdminPage() {
 
               <div className="space-y-4">
                 <label className="block text-sm">
-                  <span className="mb-2 block font-medium text-forest-deep">Package Perks (Press Enter)</span>
+                  <span className="mb-2 block font-medium text-forest-deep">
+                    Package Perks (Press Enter)
+                  </span>
                   <input
                     type="text"
                     value={perkInput}
@@ -226,9 +342,16 @@ function OffersAdminPage() {
                 {form.perks.length > 0 && (
                   <ul className="grid grid-cols-2 gap-3 mt-4">
                     {form.perks.map((perk, i) => (
-                      <li key={i} className="flex items-center justify-between bg-muted/30 border border-border/50 px-3 py-2 rounded-lg text-xs font-medium text-forest-deep gap-2 group">
+                      <li
+                        key={i}
+                        className="flex items-center justify-between bg-muted/30 border border-border/50 px-3 py-2 rounded-lg text-xs font-medium text-forest-deep gap-2 group"
+                      >
                         <span className="truncate">{perk}</span>
-                        <button type="button" onClick={() => removePerk(i)} className="text-muted-foreground hover:text-destructive opacity-50 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => removePerk(i)}
+                          className="text-muted-foreground hover:text-destructive opacity-50 group-hover:opacity-100 transition-opacity"
+                        >
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </li>
@@ -240,15 +363,19 @@ function OffersAdminPage() {
 
             <div className="flex flex-col gap-6">
               <label className="block text-sm font-medium text-forest-deep mb-2">Offer Image</label>
-              <div 
-                className={`relative flex-1 group overflow-hidden rounded-2xl border-2 border-dashed ${imagePreview ? 'border-border/0' : 'border-border hover:border-gold/50'} bg-muted/10 transition-all duration-300 flex items-center justify-center`}
+              <div
+                className={`relative flex-1 group overflow-hidden rounded-2xl border-2 border-dashed ${imagePreview ? "border-border/0" : "border-border hover:border-gold/50"} bg-muted/10 transition-all duration-300 flex items-center justify-center`}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
               >
                 {imagePreview ? (
                   <>
-                    <img src={imagePreview} alt="Preview" className="h-48 w-full object-cover rounded-xl" />
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-48 w-full object-cover rounded-xl"
+                    />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer backdrop-blur-sm">
                       <UploadCloud className="h-8 w-8 mb-2" />
                       <span className="text-sm font-medium">Replace offer image</span>
@@ -259,8 +386,12 @@ function OffersAdminPage() {
                     <div className="h-12 w-12 rounded-full bg-gold/10 text-gold grid place-items-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm">
                       <UploadCloud className="h-6 w-6" />
                     </div>
-                    <p className="text-sm font-medium text-forest-deep mb-1">Upload a high quality image</p>
-                    <p className="text-xs text-muted-foreground">Drag and drop or click to browse</p>
+                    <p className="text-sm font-medium text-forest-deep mb-1">
+                      Upload a high quality image
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Drag and drop or click to browse
+                    </p>
                   </div>
                 )}
                 <input
@@ -277,7 +408,9 @@ function OffersAdminPage() {
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
                     <div className="flex flex-col items-center gap-3">
                       <div className="h-6 w-6 animate-spin rounded-full border-2 border-gold border-t-transparent shadow-sm" />
-                      <span className="text-xs font-semibold uppercase tracking-widest text-forest-deep">Uploading...</span>
+                      <span className="text-xs font-semibold uppercase tracking-widest text-forest-deep">
+                        Uploading...
+                      </span>
                     </div>
                   </div>
                 )}
@@ -299,7 +432,10 @@ function OffersAdminPage() {
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-[400px] rounded-3xl bg-muted/40 animate-pulse border border-border/50" />
+            <div
+              key={n}
+              className="h-[400px] rounded-3xl bg-muted/40 animate-pulse border border-border/50"
+            />
           ))}
         </div>
       ) : offers.length === 0 ? (
@@ -307,9 +443,12 @@ function OffersAdminPage() {
           <div className="h-16 w-16 bg-gold/10 rounded-full grid place-items-center mb-5 text-gold">
             <Box className="h-8 w-8 opacity-80" />
           </div>
-          <h3 className="font-serif text-3xl text-forest-deep tracking-tight mb-2">No active offers</h3>
+          <h3 className="font-serif text-3xl text-forest-deep tracking-tight mb-2">
+            No active offers
+          </h3>
           <p className="text-sm text-muted-foreground mt-2 max-w-sm leading-relaxed">
-            There are currently no promotional packages available. Design and publish a new offer to attract guests.
+            There are currently no promotional packages available. Design and publish a new offer to
+            attract guests.
           </p>
           <button
             type="button"
@@ -322,10 +461,26 @@ function OffersAdminPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {offers.map((o) => (
-            <article key={o.id} className="group bg-background border border-border overflow-hidden hover:shadow-luxury transition-all duration-500 flex flex-col rounded-2xl">
+            <article
+              key={o.id}
+              className="group bg-background border border-border overflow-hidden hover:shadow-luxury transition-all duration-500 flex flex-col rounded-2xl"
+            >
               <div className="relative aspect-[4/3] overflow-hidden bg-muted/20">
+                <div className="absolute left-4 top-4 z-10 rounded-md border border-white/60 bg-background/80 p-1 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedOfferIds.includes(o.id)}
+                    onChange={() => toggleOfferSelection(o.id)}
+                    className="h-4 w-4 accent-forest-deep"
+                    aria-label={`Select offer ${o.title}`}
+                  />
+                </div>
                 {o.image_url ? (
-                  <img src={o.image_url} alt={o.title} className="h-full w-full object-cover transition-transform duration-[1600ms] group-hover:scale-110" />
+                  <img
+                    src={o.image_url}
+                    alt={o.title}
+                    className="h-full w-full object-cover transition-transform duration-[1600ms] group-hover:scale-110"
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-sm uppercase tracking-[0.2em] text-muted-foreground">
                     No image
@@ -346,15 +501,17 @@ function OffersAdminPage() {
                   ))}
                   {o.perks.length > 4 && (
                     <li className="text-xs text-muted-foreground italic mt-2">
-                       + {o.perks.length - 4} more perks
+                      + {o.perks.length - 4} more perks
                     </li>
                   )}
                 </ul>
                 <div className="mt-6 flex items-center justify-between border-b border-border pb-5">
-                   <div>
-                     <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{o.from_label}</div>
-                     <div className="font-serif text-2xl text-forest-deep">{o.price}</div>
-                   </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      {o.from_label}
+                    </div>
+                    <div className="font-serif text-2xl text-forest-deep">{o.price}</div>
+                  </div>
                 </div>
                 <div className="mt-4 pt-2 flex items-center gap-3">
                   <button
@@ -380,7 +537,15 @@ function OffersAdminPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm(`Delete offer "${o.title}"?`)) removeOffer.mutate(o.id);
+                      setConfirmDialog({
+                        open: true,
+                        title: `Delete Offer`,
+                        description: `This will permanently remove "${o.title}" from the public offers list. This action cannot be undone.`,
+                        onConfirm: () => {
+                          removeOffer.mutate(o.id);
+                          setConfirmDialog((d) => ({ ...d, open: false }));
+                        },
+                      });
                     }}
                     className="flex-1 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-destructive hover:bg-destructive hover:text-white transition-colors"
                   >
@@ -392,6 +557,48 @@ function OffersAdminPage() {
           ))}
         </div>
       )}
+
+      {offers.length > 0 && (
+        <div className="flex items-center justify-between py-4 px-6 bg-background/50 border-t border-border mt-8 rounded-b-2xl">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSelectAllOffers}
+              className={`flex items-center justify-center h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all duration-300 ${
+                allVisibleOffersSelected
+                  ? "bg-gold text-white shadow-soft"
+                  : "bg-muted/10 text-forest-deep hover:bg-muted/20"
+              }`}
+            >
+              {allVisibleOffersSelected ? "Deselect All" : "Select All"}
+            </button>
+            {selectedOfferIds.length > 0 && (
+              <button
+                onClick={deleteSelectedOffers}
+                className={`flex items-center justify-center h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all duration-300 ${
+                  bulkDeletePending
+                    ? "bg-destructive/80 text-white cursor-not-allowed"
+                    : "bg-destructive text-white hover:bg-destructive/80"
+                }`}
+                disabled={bulkDeletePending}
+              >
+                {bulkDeletePending ? "Deleting..." : "Delete Selected"}
+              </button>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {selectedOfferIds.length} offer{selectedOfferIds.length !== 1 ? "s" : ""} selected
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDialog.onConfirm}
+      />
     </div>
   );
 }

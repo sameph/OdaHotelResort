@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, Phone } from "lucide-react";
+import { ChevronDown, Menu, X, Phone } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLang } from "@/lib/i18n";
 
@@ -10,6 +10,7 @@ const LOGO_URL =
 export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const { location } = useRouterState();
   const { t } = useLang();
   const currentPath = location.pathname;
@@ -18,13 +19,19 @@ export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
     { key: "nav.home", to: "/" },
     { key: "nav.rooms", to: "/rooms" },
     { key: "nav.about", to: "/about" },
-    { key: "nav.dining", to: "/dining" },
-    { key: "nav.menu", to: "/menu" },
     { key: "nav.gallery", to: "/gallery" },
-    { key: "nav.events", to: "/events" },
-    { key: "nav.offers", to: "/offers" },
     { key: "nav.contact", to: "/contact" },
   ] as const;
+
+  const services = [
+    { key: "nav.dining", to: "/dining" },
+    { key: "nav.menu", to: "/menu" },
+    { key: "nav.events", to: "/events" },
+    { key: "nav.offers", to: "/offers" },
+    { key: "nav.gastronomy", to: "/gastronomy" },
+  ] as const;
+
+  const servicesActive = services.some((service) => service.to === currentPath);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -90,6 +97,50 @@ export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
               </Link>
             );
           })}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setServicesOpen((isOpen) => !isOpen)}
+              className={`relative inline-flex items-center gap-1 text-sm tracking-wide transition-colors ${
+                servicesActive
+                  ? "text-gold"
+                  : solid
+                    ? "text-foreground/85 hover:text-gold"
+                    : "text-white/90 hover:text-gold"
+              }`}
+              aria-expanded={servicesOpen}
+              aria-haspopup="menu"
+            >
+              {t("nav.services")}
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${servicesOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+              {servicesActive && (
+                <span className="absolute -bottom-1.5 left-0 right-0 mx-auto h-[2px] w-6 bg-gold" />
+              )}
+            </button>
+            {servicesOpen && (
+              <div
+                className="absolute left-1/2 top-full z-50 mt-4 w-48 -translate-x-1/2 border border-border bg-background p-2 shadow-luxury"
+                role="menu"
+              >
+                {services.map((service) => (
+                  <Link
+                    key={service.key}
+                    to={service.to}
+                    role="menuitem"
+                    onClick={() => setServicesOpen(false)}
+                    className={`block px-3 py-2.5 text-sm transition-colors hover:bg-cream hover:text-gold ${
+                      currentPath === service.to ? "text-gold" : "text-foreground/85"
+                    }`}
+                  >
+                    {t(service.key)}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
@@ -140,6 +191,25 @@ export function SiteHeader({ transparent = true }: { transparent?: boolean }) {
                 {t(n.key)}
               </Link>
             ))}
+            <div className="border-b border-border/50 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground/55">
+                {t("nav.services")}
+              </p>
+              <div className="mt-1 flex flex-col">
+                {services.map((service) => (
+                  <Link
+                    key={service.key}
+                    to={service.to}
+                    className={`py-2 pl-4 text-base transition-colors hover:text-gold ${
+                      currentPath === service.to ? "text-gold" : "text-foreground/85"
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    {t(service.key)}
+                  </Link>
+                ))}
+              </div>
+            </div>
             <Link
               to="/book"
               onClick={() => setOpen(false)}

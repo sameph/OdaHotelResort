@@ -33,7 +33,7 @@ export const Route = createFileRoute("/rooms")({
   component: RoomsPage,
 });
 
-const ROOM_TYPES: RoomType[] = ["Suite", "Deluxe", "Villa"];
+const ROOM_TYPES: RoomType[] = ["Standard", "Twin", "Suite", "Family", "King"];
 const ROOM_VIEWS: RoomView[] = ["Rift Valley View", "Garden View", "Pool View"];
 const AMENITIES: RoomAmenity[] = [
   "King-size bed",
@@ -80,7 +80,15 @@ function RoomsPage() {
         sizeSqm: r.size_sqm ?? 32,
         guests: r.capacity,
         popular: r.popular || false,
-        amenities: r.amenities || [],
+        amenities: (r.amenities as any) || [],
+        quantity: r.quantity ?? 1,
+        available_quantity:
+          r.available_quantity !== undefined && r.available_quantity !== null
+            ? r.available_quantity
+            : r.status === "occupied"
+              ? 0
+              : (r.quantity ?? 1),
+        status: r.status,
       })),
     [dbRooms],
   );
@@ -327,8 +335,16 @@ function Checkbox({
 }
 
 function RoomCard({ room }: { room: Room }) {
+  const isOccupied =
+    room.status === "occupied" ||
+    (room.available_quantity !== undefined && room.available_quantity <= 0);
+
   return (
-    <article className="group bg-background border border-border overflow-hidden hover:shadow-luxury transition-all duration-500 h-full flex flex-col">
+    <article
+      className={`group bg-background border overflow-hidden hover:shadow-luxury transition-all duration-500 h-full flex flex-col ${
+        isOccupied ? "border-destructive/30" : "border-border"
+      }`}
+    >
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={room.img}
@@ -336,18 +352,38 @@ function RoomCard({ room }: { room: Room }) {
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-[1600ms] group-hover:scale-110"
         />
-        {room.popular && (
+
+        {/* Occupied / Popular Badge */}
+        {isOccupied ? (
+          <span className="absolute top-4 left-4 bg-destructive text-white text-[10px] font-bold px-3 py-1 uppercase tracking-[0.2em] shadow-md">
+            All Occupied
+          </span>
+        ) : room.popular ? (
           <span className="absolute top-4 left-4 bg-gold text-gold-foreground text-[10px] px-3 py-1 uppercase tracking-[0.2em]">
             Popular
           </span>
-        )}
+        ) : null}
+
         <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm px-4 py-2 text-sm">
           <span className="font-semibold text-forest-deep">{formatBirr(room.price)}</span>
           <span className="text-xs text-muted-foreground">/night</span>
         </div>
       </div>
       <div className="p-6 flex-1 flex flex-col">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-gold">{room.type}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-gold font-semibold">
+            {room.type} Room
+          </p>
+          {isOccupied ? (
+            <span className="text-[10px] uppercase tracking-wider font-bold text-destructive bg-destructive/10 px-2.5 py-0.5 rounded border border-destructive/20">
+              Occupied
+            </span>
+          ) : room.available_quantity !== undefined ? (
+            <span className="text-[10px] uppercase tracking-wider font-medium text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+              {room.available_quantity} Available
+            </span>
+          ) : null}
+        </div>
         <h3 className="mt-2 font-serif text-2xl text-forest-deep">{room.name}</h3>
         <p className="mt-3 text-sm text-foreground/70 leading-relaxed">{room.desc}</p>
 
@@ -374,13 +410,24 @@ function RoomCard({ room }: { room: Room }) {
               {room.guests}
             </span>
           </div>
-          <Link
-            to="/book"
-            search={{ room: room.slug }}
-            className="inline-flex items-center gap-1 bg-forest-deep text-white px-4 py-2 text-[11px] uppercase tracking-[0.2em] hover:bg-gold hover:text-gold-foreground transition-colors"
-          >
-            Book <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+
+          {isOccupied ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-4 py-2 text-[11px] uppercase tracking-[0.2em] cursor-not-allowed opacity-80 rounded-none border border-border"
+            >
+              Occupied
+            </button>
+          ) : (
+            <Link
+              to="/book"
+              search={{ room: room.slug }}
+              className="inline-flex items-center gap-1 bg-forest-deep text-white px-4 py-2 text-[11px] uppercase tracking-[0.2em] hover:bg-gold hover:text-gold-foreground transition-colors"
+            >
+              Book <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
       </div>
     </article>

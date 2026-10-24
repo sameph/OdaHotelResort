@@ -22,6 +22,7 @@ import {
   Users,
   BedDouble,
   Maximize,
+  GraduationCap,
 } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
@@ -29,6 +30,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { BookingBar } from "@/components/booking-bar";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { DiningExperience } from "@/components/dining-experience";
+import { GastronomyCenter } from "@/components/gastronomy-center";
 import { Reveal } from "@/components/reveal";
 import { SectionHeading } from "@/components/section-heading";
 import { useLang } from "@/lib/i18n";
@@ -134,6 +136,7 @@ function HomePage() {
         <Dining />
         <Amenities />
         <Events />
+        <GastronomyCenter />
         <Offers offers={data.offers} />
         <Testimonials />
         <Gallery images={data.gallery} />

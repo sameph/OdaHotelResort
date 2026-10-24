@@ -200,7 +200,7 @@ function DiningPage() {
               center
             />
             <div className="mt-16 grid gap-8 lg:grid-cols-2">
-              {Object.entries(groupedMenu).map(([category, items], sectionIndex) => (
+              {Object.entries(groupedMenu).map(([category, items]: [string, any], sectionIndex) => (
                 <Reveal key={category} delay={sectionIndex * 100}>
                   <div className="h-full rounded-[2rem] border border-border bg-cream p-6 shadow-soft md:p-8">
                     <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
@@ -216,7 +216,7 @@ function DiningPage() {
                     </div>
 
                     <div className="space-y-5">
-                      {items.map((item) => (
+                      {items.map((item: any) => (
                         <div
                           key={`${category}-${item.title}`}
                           className="rounded-2xl border border-border bg-background/70 p-4"
@@ -243,7 +243,7 @@ function DiningPage() {
                           </div>
                           {(item.allergens ?? []).length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-2">
-                              {(item.allergens ?? []).map((allergen) => (
+                              {(item.allergens ?? []).map((allergen: string) => (
                                 <span
                                   key={`${item.title}-${allergen}`}
                                   className="rounded-full border border-border bg-muted/30 px-2 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground"

@@ -42,6 +42,7 @@ const FROM =
   process.env.VITE_EMAIL_FROM ||
   `onboarding@resend.dev`;
 const SITE = process.env.SITE_URL || process.env.VITE_SITE_URL || "http://localhost:5173";
+const SITE = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://odaresortandhotel.com";
 
 if (!RESEND_API_KEY) {
   console.error("RESEND_API_KEY not found in .env or process.env. Aborting.");

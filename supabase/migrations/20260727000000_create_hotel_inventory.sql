@@ -17,6 +17,8 @@ create table if not exists public.rooms (
   beds text,
   size_sqm integer,
   popular boolean not null default false,
+  quantity integer not null default 1 check (quantity >= 0),
+  available_quantity integer not null default 1 check (available_quantity >= 0),
   created_at timestamptz not null default now()
 );
 

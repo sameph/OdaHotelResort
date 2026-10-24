@@ -1,15 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { Check, Plus, UploadCloud, UtensilsCrossed, X } from "lucide-react";
 import {
   createMenuItem,
   deleteMenuItem,
+  deleteMenuItems,
   fetchMenuItems,
   updateMenuItem,
   uploadImage,
 } from "@/lib/supabase-service";
 import type { MenuItemInsert, MenuItemRow } from "@/lib/supabase-types";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/admin/menu")({
   component: MenuAdminPage,
@@ -34,6 +37,14 @@ function MenuAdminPage() {
   const [allergenInput, setAllergenInput] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedMenuItemIds, setSelectedMenuItemIds] = useState<number[]>([]);
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", description: "", onConfirm: () => {} });
 
   const { data: items = [], isLoading } = useQuery<MenuItemRow[], Error>({
     queryKey: ["food-menu"],
@@ -61,6 +72,16 @@ function MenuAdminPage() {
     },
   });
 
+  const deleteMenuItemsMutation = useMutation({
+    mutationFn: deleteMenuItems,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["food-menu"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Menu item deletion failed. Please try again.");
+    },
+  });
+
   const resetForm = () => {
     setEditingId(null);
     setForm(emptyForm());
@@ -75,7 +96,7 @@ function MenuAdminPage() {
       setForm((prev) => ({ ...prev, image_url: url }));
       setImagePreview(url);
     } catch (err: any) {
-      alert("Upload failed: " + (err?.message ?? "Unknown upload error"));
+      toast.error("Upload failed: " + (err?.message ?? "Unknown upload error"));
     } finally {
       setIsUploading(false);
     }
@@ -130,10 +151,69 @@ function MenuAdminPage() {
       !form.description.trim() ||
       !form.price.trim()
     ) {
-      alert("Please fill in the required menu fields.");
+      toast.warning("Please fill in the required menu fields.");
       return;
     }
     saveMutation.mutate(form);
+  };
+
+  const selectedVisibleMenuItemIds = items.map((item) => item.id);
+  const allVisibleMenuItemsSelected =
+    items.length > 0 && selectedVisibleMenuItemIds.every((id) => selectedMenuItemIds.includes(id));
+
+  const toggleMenuItemSelection = (id: number) => {
+    setSelectedMenuItemIds((current) =>
+      current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id],
+    );
+  };
+
+  const toggleSelectAllMenuItems = () => {
+    setSelectedMenuItemIds((current) => {
+      if (items.length === 0) return current;
+      const nextIds = new Set(current);
+      if (allVisibleMenuItemsSelected) {
+        for (const id of selectedVisibleMenuItemIds) nextIds.delete(id);
+      } else {
+        for (const id of selectedVisibleMenuItemIds) nextIds.add(id);
+      }
+      return Array.from(nextIds);
+    });
+  };
+
+  const deleteSelectedMenuItems = async () => {
+    const ids = items
+      .filter((item) => selectedMenuItemIds.includes(item.id))
+      .map((item) => item.id);
+    if (!ids.length) {
+      toast.warning("Select at least one menu item before deleting.");
+      return;
+    }
+
+    const itemTitles = items
+      .filter((item) => ids.includes(item.id))
+      .map((item) => item.title)
+      .slice(0, 3)
+      .join(", ");
+    const extra = ids.length > 3 ? ` and ${ids.length - 3} more item(s)` : "";
+    setConfirmDialog({
+      open: true,
+      title: `Delete ${ids.length} Menu Item${ids.length > 1 ? "s" : ""}`,
+      description: `This will permanently remove ${itemTitles || "the selected item"}${extra} from the menu. This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog((d) => ({ ...d, open: false }));
+        try {
+          setBulkDeletePending(true);
+          await deleteMenuItemsMutation.mutateAsync(ids);
+          setSelectedMenuItemIds([]);
+          toast.success(`Deleted ${ids.length} menu item${ids.length > 1 ? "s" : ""} successfully.`);
+        } catch (error: any) {
+          console.error("Menu bulk delete failed:", error);
+          toast.error(error?.message || "Unable to delete the selected menu items. Please try again.");
+        } finally {
+          setBulkDeletePending(false);
+        }
+      },
+    });
   };
 
   return (
@@ -409,7 +489,17 @@ function MenuAdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => deleteMutation.mutate(item.id)}
+                  onClick={() => {
+                    setConfirmDialog({
+                      open: true,
+                      title: `Delete Menu Item`,
+                      description: `This will permanently remove "${item.title}" from the menu. This action cannot be undone.`,
+                      onConfirm: () => {
+                        deleteMutation.mutate(item.id);
+                        setConfirmDialog((d) => ({ ...d, open: false }));
+                      },
+                    });
+                  }}
                   className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.18em] text-destructive hover:bg-destructive/15"
                 >
                   Delete
@@ -419,6 +509,87 @@ function MenuAdminPage() {
           ))
         )}
       </div>
+
+      {items.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-border bg-background/50 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 className="font-serif text-xl text-forest-deep">
+              {selectedMenuItemIds.length > 0
+                ? `Selected ${selectedMenuItemIds.length} item${selectedMenuItemIds.length > 1 ? "s" : ""}`
+                : "Menu items"}
+            </h2>
+
+            {selectedMenuItemIds.length > 0 && (
+              <button
+                onClick={deleteSelectedMenuItems}
+                disabled={bulkDeletePending}
+                className="inline-flex items-center gap-2 rounded-xl bg-destructive px-4 py-2 text-sm font-semibold uppercase tracking-[0.15em] text-white shadow-soft hover:bg-destructive/90 transition-all duration-300 disabled:opacity-60"
+              >
+                {bulkDeletePending ? "Deleting…" : "Delete selected items"}
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className={`flex items-center gap-3 rounded-xl border border-border bg-background/50 p-4 transition-all duration-300 ${
+                  selectedMenuItemIds.includes(item.id)
+                    ? "bg-destructive/10 border-destructive"
+                    : "hover:border-gold/60"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedMenuItemIds.includes(item.id)}
+                  onChange={() => toggleMenuItemSelection(item.id)}
+                  className="h-5 w-5 accent-gold"
+                />
+
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="h-16 w-16 rounded-2xl object-cover"
+                  />
+                ) : (
+                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-cream text-gold">
+                    <UtensilsCrossed className="h-6 w-6" />
+                  </div>
+                )}
+
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-forest/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-forest-deep">
+                      {item.category}
+                    </span>
+                    {item.featured && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-gold-foreground">
+                        <Check className="h-3 w-3" /> Chef's special
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-col gap-1">
+                    <h3 className="font-serif text-lg text-forest-deep">{item.title}</h3>
+                    <span className="text-sm font-semibold text-gold-foreground">{item.price}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDialog.onConfirm}
+      />
     </div>
   );
 }

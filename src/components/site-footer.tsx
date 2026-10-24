@@ -12,6 +12,7 @@ const explore = [
 
 const company = [
   { label: "About ODA", to: "/about" as const },
+  { label: "Gastronomy Center", to: "/gastronomy" as const },
   { label: "Contact", to: "/contact" as const },
 ];
 

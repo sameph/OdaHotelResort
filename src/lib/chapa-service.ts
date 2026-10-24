@@ -26,6 +26,7 @@ export const initializeChapaPayment = createServerFn({ method: "POST" })
         ? (import.meta as ImportMeta & { env?: any }).env?.VITE_SITE_URL
         : undefined) ||
       "http://localhost:5173";
+      "https://odaresortandhotel.com";
 
     const payload = {
       amount: data.amount,

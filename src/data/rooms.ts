@@ -5,7 +5,9 @@ const roomDeluxe = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/p
 const roomFamily = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/room-family.jpg";
 const poolImg = "https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/pool.jpg";
 
-export type RoomType = "Suite" | "Deluxe" | "Villa";
+export const ROOM_CATEGORIES = ["Standard", "Twin", "Suite", "Family", "King"] as const;
+export type RoomCategory = (typeof ROOM_CATEGORIES)[number];
+export type RoomType = RoomCategory | "Deluxe" | "Villa";
 export type RoomView = "Rift Valley View" | "Garden View" | "Pool View";
 export type RoomAmenity =
   | "King-size bed"
@@ -37,6 +39,9 @@ export type Room = {
   amenities: RoomAmenity[];
   tags: string[];
   desc: string;
+  quantity?: number;
+  available_quantity?: number;
+  status?: "available" | "occupied" | "cleaning" | "maintenance";
 };
 
 export const rooms: Room[] = [

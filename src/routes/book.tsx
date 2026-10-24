@@ -155,7 +155,15 @@ function BookPage() {
         sizeSqm: r.size_sqm ?? 32,
         guests: r.capacity,
         popular: r.popular || false,
-        amenities: r.amenities || [],
+        amenities: (r.amenities as any) || [],
+        quantity: r.quantity ?? 1,
+        available_quantity:
+          r.available_quantity !== undefined && r.available_quantity !== null
+            ? r.available_quantity
+            : r.status === "occupied"
+              ? 0
+              : (r.quantity ?? 1),
+        status: r.status,
       })),
     [dbRooms],
   );
@@ -206,11 +214,23 @@ function BookPage() {
     },
   });
 
+  const isRoomOccupied = (r?: Room) => {
+    if (!r) return false;
+    return (
+      r.status === "occupied" ||
+      (r.available_quantity !== undefined && r.available_quantity <= 0) ||
+      (availableSlugs !== undefined && !availableSlugs.includes(r.slug))
+    );
+  };
+
   const room = rooms.find((r) => r.slug === roomSlug) ?? rooms[0];
 
   const totalExtrasCount = useMemo(() => {
-    // hack to safely set initial room slug once loaded, preventing crash from undefined room loading initially.
-    if (rooms.length > 0 && !roomSlug) setRoomSlug(rooms[0].slug);
+    // safely set initial room slug once loaded, picking first non-occupied room if possible
+    if (rooms.length > 0 && !roomSlug) {
+      const firstAvailable = rooms.find((r) => !isRoomOccupied(r)) || rooms[0];
+      setRoomSlug(firstAvailable.slug);
+    }
     return selectedExtras.length;
   }, [rooms, roomSlug, selectedExtras.length]);
   const nights = useMemo(() => {
@@ -233,7 +253,7 @@ function BookPage() {
 
   const canNext =
     step === 1
-      ? !!checkIn && !!checkOut && nights > 0 && !!room
+      ? !!checkIn && !!checkOut && nights > 0 && !!room && !isRoomOccupied(room)
       : step === 2
         ? guest.firstName &&
           guest.lastName &&
@@ -250,6 +270,13 @@ function BookPage() {
             : true;
 
   const submit = async () => {
+    if (isRoomOccupied(room)) {
+      const msg = "This room category is currently all occupied. Please choose an available category.";
+      setBookingError(msg);
+      toast.error(msg);
+      return;
+    }
+
     const ref = "ODA-" + Math.random().toString(36).slice(2, 8).toUpperCase();
     setBookingError(null);
     try {
@@ -621,11 +648,59 @@ function StepDatesRoom({
               </div>
             ))
           : rooms
-              .filter(
-                (r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug)),
-              )
+              .filter((r) => r.guests >= guests)
               .map((r) => {
                 const active = r.slug === roomSlug;
+                const isOccupied =
+                  r.status === "occupied" ||
+                  (r.available_quantity !== undefined && r.available_quantity <= 0) ||
+                  (availableSlugs !== undefined && !availableSlugs.includes(r.slug));
+
+                if (isOccupied) {
+                  return (
+                    <div
+                      key={r.slug}
+                      className="w-full text-left flex items-center gap-4 p-3 border border-border/60 bg-muted/20 opacity-70 cursor-not-allowed"
+                    >
+                      <div className="relative shrink-0">
+                        <img
+                          src={r.img}
+                          alt=""
+                          className="h-20 w-24 object-cover filter grayscale-[30%]"
+                        />
+                        <span className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-white bg-destructive px-1.5 py-0.5 rounded">
+                            Occupied
+                          </span>
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-serif text-lg text-muted-foreground">
+                              {r.name}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded border border-destructive/20">
+                              All Occupied
+                            </span>
+                          </div>
+                          <span className="font-serif text-base text-muted-foreground">
+                            {currency(r.price)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground mt-1">
+                          <span>
+                            {r.type} Room • {r.beds} • {r.guests} guests
+                          </span>
+                          <span className="text-destructive font-medium text-[11px]">
+                            Fully Booked
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={r.slug}
@@ -633,21 +708,28 @@ function StepDatesRoom({
                     onClick={() => setRoomSlug(r.slug)}
                     className={`w-full text-left flex items-center gap-4 p-3 border transition-all ${
                       active
-                        ? "border-forest-deep bg-forest-deep/5 ring-1 ring-forest-deep/30"
-                        : "border-border hover:border-forest-deep/50"
+                        ? "border-forest-deep bg-forest-deep/5 ring-1 ring-forest-deep/30 shadow-sm"
+                        : "border-border hover:border-forest-deep/50 bg-white"
                     }`}
                   >
                     <img src={r.img} alt="" className="h-20 w-24 object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-serif text-lg text-forest-deep">{r.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif text-lg text-forest-deep">{r.name}</span>
+                          {r.available_quantity !== undefined && (
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                              {r.available_quantity} Available
+                            </span>
+                          )}
+                        </div>
                         <span className="font-serif text-lg text-forest-deep">
                           {currency(r.price)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground mt-1">
                         <span>
-                          {r.beds} • {r.size} • {r.guests} guests
+                          {r.type} Room • {r.beds} • {r.size} • {r.guests} guests
                         </span>
                         <span>/night</span>
                       </div>
@@ -656,11 +738,9 @@ function StepDatesRoom({
                 );
               })}
         {!isAvailabilityLoading &&
-          rooms.filter(
-            (r) => r.guests >= guests && (!availableSlugs || availableSlugs.includes(r.slug)),
-          ).length === 0 && (
+          rooms.filter((r) => r.guests >= guests).length === 0 && (
             <div className="py-8 text-center border border-border text-sm text-muted-foreground bg-white">
-              No rooms available for the selected dates and guest count. Try adjusting your search.
+              No rooms match the selected guest count. Try adjusting your search.
             </div>
           )}
       </div>
@@ -842,7 +922,7 @@ function StepPayment({
           <div className="flex items-start gap-4">
             <div className="bg-white p-2 rounded shadow-sm shrink-0 mt-1">
               <img
-                src="https://chapa.link/asset/images/chapa_swirl.svg"
+                src="https://mfzxlpmqtoryrdkfnpat.supabase.co/storage/v1/object/public/oda%20web%20pictures/logo-dark.png"
                 alt="Chapa Logo"
                 className="h-8 w-8 object-contain"
               />

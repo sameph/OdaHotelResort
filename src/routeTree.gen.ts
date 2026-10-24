@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DiningRouteImport } from './routes/dining'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as GastronomyRouteImport } from './routes/gastronomy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as RoomsRouteImport } from './routes/rooms'
@@ -26,9 +28,11 @@ import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminGuestsRouteImport } from './routes/admin.guests'
+import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminOffersRouteImport } from './routes/admin.offers'
 import { Route as AdminRoomsRouteImport } from './routes/admin.rooms'
+import { Route as AdminInviteAcceptRouteImport } from './routes/admin.invite.accept'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -38,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -68,6 +77,11 @@ const EventsRoute = EventsRouteImport.update({
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GastronomyRoute = GastronomyRouteImport.update({
+  id: '/gastronomy',
+  path: '/gastronomy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -115,6 +129,11 @@ const AdminGuestsRoute = AdminGuestsRouteImport.update({
   path: '/guests',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInviteRoute = AdminInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -130,16 +149,23 @@ const AdminRoomsRoute = AdminRoomsRouteImport.update({
   path: '/rooms',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInviteAcceptRoute = AdminInviteAcceptRouteImport.update({
+  id: '/accept',
+  path: '/accept',
+  getParentRoute: () => AdminInviteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
   '/dining': typeof DiningRoute
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
+  '/gastronomy': typeof GastronomyRoute
   '/menu': typeof MenuRoute
   '/offers': typeof OffersRoute
   '/rooms': typeof RoomsRoute
@@ -148,19 +174,23 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/invite': typeof AdminInviteRouteWithChildren
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
   '/dining': typeof DiningRoute
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
+  '/gastronomy': typeof GastronomyRoute
   '/menu': typeof MenuRoute
   '/offers': typeof OffersRoute
   '/rooms': typeof RoomsRoute
@@ -169,21 +199,25 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/invite': typeof AdminInviteRouteWithChildren
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
   '/dining': typeof DiningRoute
   '/events': typeof EventsRoute
   '/gallery': typeof GalleryRoute
+  '/gastronomy': typeof GastronomyRoute
   '/menu': typeof MenuRoute
   '/offers': typeof OffersRoute
   '/rooms': typeof RoomsRoute
@@ -192,22 +226,26 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/guests': typeof AdminGuestsRoute
+  '/admin/invite': typeof AdminInviteRouteWithChildren
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/accept-invite'
     | '/admin'
     | '/book'
     | '/contact'
     | '/dining'
     | '/events'
     | '/gallery'
+    | '/gastronomy'
     | '/menu'
     | '/offers'
     | '/rooms'
@@ -216,19 +254,23 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/invite'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin/'
+    | '/admin/invite/accept'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/accept-invite'
     | '/book'
     | '/contact'
     | '/dining'
     | '/events'
     | '/gallery'
+    | '/gastronomy'
     | '/menu'
     | '/offers'
     | '/rooms'
@@ -237,20 +279,24 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/invite'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin'
+    | '/admin/invite/accept'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/accept-invite'
     | '/admin'
     | '/book'
     | '/contact'
     | '/dining'
     | '/events'
     | '/gallery'
+    | '/gastronomy'
     | '/menu'
     | '/offers'
     | '/rooms'
@@ -259,21 +305,25 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/gallery'
     | '/admin/guests'
+    | '/admin/invite'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
     | '/admin/'
+    | '/admin/invite/accept'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AdminRoute: typeof AdminRouteWithChildren
   BookRoute: typeof BookRoute
   ContactRoute: typeof ContactRoute
   DiningRoute: typeof DiningRoute
   EventsRoute: typeof EventsRoute
   GalleryRoute: typeof GalleryRoute
+  GastronomyRoute: typeof GastronomyRoute
   MenuRoute: typeof MenuRoute
   OffersRoute: typeof OffersRoute
   RoomsRoute: typeof RoomsRoute
@@ -293,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -335,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gastronomy': {
+      id: '/gastronomy'
+      path: '/gastronomy'
+      fullPath: '/gastronomy'
+      preLoaderRoute: typeof GastronomyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -400,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGuestsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invite': {
+      id: '/admin/invite'
+      path: '/invite'
+      fullPath: '/admin/invite'
+      preLoaderRoute: typeof AdminInviteRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/menu': {
       id: '/admin/menu'
       path: '/menu'
@@ -421,8 +492,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRoomsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invite/accept': {
+      id: '/admin/invite/accept'
+      path: '/accept'
+      fullPath: '/admin/invite/accept'
+      preLoaderRoute: typeof AdminInviteAcceptRouteImport
+      parentRoute: typeof AdminInviteRoute
+    }
   }
 }
+
+interface AdminInviteRouteChildren {
+  AdminInviteAcceptRoute: typeof AdminInviteAcceptRoute
+}
+
+const AdminInviteRouteChildren: AdminInviteRouteChildren = {
+  AdminInviteAcceptRoute: AdminInviteAcceptRoute,
+}
+
+const AdminInviteRouteWithChildren = AdminInviteRoute._addFileChildren(
+  AdminInviteRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
@@ -430,6 +520,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminGalleryRoute: typeof AdminGalleryRoute
   AdminGuestsRoute: typeof AdminGuestsRoute
+  AdminInviteRoute: typeof AdminInviteRouteWithChildren
   AdminMenuRoute: typeof AdminMenuRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminRoomsRoute: typeof AdminRoomsRoute
@@ -442,6 +533,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminGalleryRoute: AdminGalleryRoute,
   AdminGuestsRoute: AdminGuestsRoute,
+  AdminInviteRoute: AdminInviteRouteWithChildren,
   AdminMenuRoute: AdminMenuRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminRoomsRoute: AdminRoomsRoute,
@@ -453,12 +545,14 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AcceptInviteRoute: AcceptInviteRoute,
   AdminRoute: AdminRouteWithChildren,
   BookRoute: BookRoute,
   ContactRoute: ContactRoute,
   DiningRoute: DiningRoute,
   EventsRoute: EventsRoute,
   GalleryRoute: GalleryRoute,
+  GastronomyRoute: GastronomyRoute,
   MenuRoute: MenuRoute,
   OffersRoute: OffersRoute,
   RoomsRoute: RoomsRoute,

@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { ensureSupabase } from "./lib/supabase";
+import { handleInvitationsApi } from "./lib/invitations-server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -71,10 +72,21 @@ export default {
           }
 
           // Extract transaction reference and status
-          const txRef = payload.tx_ref || payload.data?.tx_ref || payload.data?.transaction?.tx_ref || payload.transaction?.tx_ref || null;
-          const chapaStatus = payload.status || payload.data?.status || payload.transaction?.status || null;
-          const transactionId = payload.transaction_id || payload.data?.transaction_id || payload.transaction?.id || null;
-          const amount = payload.amount || payload.data?.amount || payload.transaction?.amount || null;
+          const txRef =
+            payload.tx_ref ||
+            payload.data?.tx_ref ||
+            payload.data?.transaction?.tx_ref ||
+            payload.transaction?.tx_ref ||
+            null;
+          const chapaStatus =
+            payload.status || payload.data?.status || payload.transaction?.status || null;
+          const transactionId =
+            payload.transaction_id ||
+            payload.data?.transaction_id ||
+            payload.transaction?.id ||
+            null;
+          const amount =
+            payload.amount || payload.data?.amount || payload.transaction?.amount || null;
 
           if (!txRef) {
             return new Response(JSON.stringify({ error: "missing tx_ref" }), { status: 400 });
@@ -82,36 +94,53 @@ export default {
 
           // Determine new booking status
           const successStatuses = ["success", "paid", "completed"];
-          const newStatus = chapaStatus && successStatuses.includes(String(chapaStatus).toLowerCase()) ? "confirmed" : "pending";
+          const newStatus =
+            chapaStatus && successStatuses.includes(String(chapaStatus).toLowerCase())
+              ? "confirmed"
+              : "pending";
 
           // Update booking matching ref
           try {
             const updates: any = {
               status: newStatus,
               // store transaction summary in requests field for traceability
-              requests: JSON.stringify({ chapa: { tx_ref: txRef, transaction_id: transactionId, status: chapaStatus, amount } }),
+              requests: JSON.stringify({
+                chapa: {
+                  tx_ref: txRef,
+                  transaction_id: transactionId,
+                  status: chapaStatus,
+                  amount,
+                },
+              }),
             };
 
-            const { error } = await supabase.from("bookings").update(updates as never).eq("ref", txRef);
+            const { error } = await supabase
+              .from("bookings")
+              .update(updates as never)
+              .eq("ref", txRef);
             if (error) {
               console.error("Failed to update booking from webhook:", error.message || error);
               return new Response(JSON.stringify({ error: "db_update_failed" }), { status: 500 });
             }
 
             if (newStatus === "confirmed") {
-              const { data: bookingData } = await supabase.from("bookings").select("*").eq("ref", txRef).single();
+              const { data: bookingData } = await supabase
+                .from("bookings")
+                .select("*")
+                .eq("ref", txRef)
+                .single();
               const booking = bookingData as any;
               if (booking) {
-                  const { sendPaymentConfirmationEmail } = await import("./lib/email-service");
-                  await sendPaymentConfirmationEmail(
-                      booking.email,
-                      booking.guest,
-                      txRef,
-                      booking.total,
-                      booking.checkIn,
-                      booking.checkOut,
-                      booking.roomType
-                  );
+                const { sendPaymentConfirmationEmail } = await import("./lib/email-service");
+                await sendPaymentConfirmationEmail(
+                  booking.email,
+                  booking.guest,
+                  txRef,
+                  booking.total,
+                  booking.checkIn,
+                  booking.checkOut,
+                  booking.roomType,
+                );
               }
             }
           } catch (e) {
@@ -126,16 +155,26 @@ export default {
       }
 
       const url = new URL(request.url);
+      if (url.pathname === "/api/invitations" || url.pathname.startsWith("/api/invitations/")) {
+        return await handleInvitationsApi(request);
+      }
+
       if (url.pathname === "/api/bookings/cancel") {
-          const ref = url.searchParams.get("ref");
-          if (!ref) return new Response("Missing booking reference", { status: 400 });
-          const supabase = ensureSupabase();
-          const { error } = await supabase.from("bookings").update({ status: "cancelled" } as never).eq("ref", ref);
-          if (error) return new Response("Failed to cancel booking", { status: 500 });
-          return new Response("<html><body style='font-family:sans-serif;text-align:center;padding:50px;'><h2>Booking Cancelled</h2><p>Your booking has been successfully cancelled. You may close this tab.</p></body></html>", { 
+        const ref = url.searchParams.get("ref");
+        if (!ref) return new Response("Missing booking reference", { status: 400 });
+        const supabase = ensureSupabase();
+        const { error } = await supabase
+          .from("bookings")
+          .update({ status: "cancelled" } as never)
+          .eq("ref", ref);
+        if (error) return new Response("Failed to cancel booking", { status: 500 });
+        return new Response(
+          "<html><body style='font-family:sans-serif;text-align:center;padding:50px;'><h2>Booking Cancelled</h2><p>Your booking has been successfully cancelled. You may close this tab.</p></body></html>",
+          {
             status: 200,
             headers: { "content-type": "text/html; charset=utf-8" },
-          });
+          },
+        );
       }
 
       const handler = await getServerEntry();
