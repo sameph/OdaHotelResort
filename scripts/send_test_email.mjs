@@ -35,13 +35,17 @@ for (const [k, v] of Object.entries(env)) {
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
-const TO = process.env.RESEND_ADMIN_EMAIL || process.env.TO_EMAIL || process.env.EMAIL_TO;
+const TO =
+  process.argv[2] ||
+  process.env.RESEND_ADMIN_EMAIL ||
+  process.env.TO_EMAIL ||
+  process.env.EMAIL_TO ||
+  "samephrem07@gmail.com";
 const FROM =
   process.env.EMAIL_FROM ||
   process.env.SENDER_EMAIL ||
   process.env.VITE_EMAIL_FROM ||
   `onboarding@resend.dev`;
-const SITE = process.env.SITE_URL || process.env.VITE_SITE_URL || "http://localhost:5173";
 const SITE = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://odaresortandhotel.com";
 
 if (!RESEND_API_KEY) {

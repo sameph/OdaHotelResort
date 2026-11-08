@@ -11,6 +11,7 @@ import {
   Tag,
   MessageSquare,
   UtensilsCrossed,
+  Mail,
 } from "lucide-react";
 import { ensureSupabase } from "@/lib/supabase";
 import { adminNavItems, receptionistNavItems, type AdminRole } from "@/lib/admin-roles";
@@ -26,6 +27,7 @@ const itemIcons = {
   "/admin/contacts": MessageSquare,
   "/admin/analytics": BarChart3,
   "/admin/gallery": ImageIcon,
+  "/admin/test-email": Mail,
 } as const;
 
 export function AdminSidebar({ role, className }: { role: AdminRole; className?: string }) {

@@ -219,6 +219,48 @@ export default {
         }
       }
 
+      if (url.pathname === "/api/send-booking-confirmation" && request.method === "POST") {
+        try {
+          const body = await request.json();
+          const { toEmail, guestName, txRef, amount, checkIn, checkOut, roomName } = body;
+          if (!toEmail || !txRef) {
+            return new Response(JSON.stringify({ error: "Missing toEmail or txRef" }), {
+              status: 400,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          const { sendPaymentConfirmationEmail } = await import("./lib/email-service");
+          const result = await sendPaymentConfirmationEmail(
+            toEmail,
+            guestName || "Valued Guest",
+            txRef,
+            Number(amount) || 0,
+            checkIn || "",
+            checkOut || "",
+            roomName || "Standard Room",
+          );
+
+          if (!result.success) {
+            return new Response(JSON.stringify({ error: result.error || "Failed to send email" }), {
+              status: 500,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          return new Response(JSON.stringify({ ok: true, id: result.id }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        } catch (err: any) {
+          console.error("Booking confirmation email API error:", err);
+          return new Response(JSON.stringify({ error: err?.message || "Internal server error" }), {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          });
+        }
+      }
+
       if (url.pathname === "/api/invitations" || url.pathname.startsWith("/api/invitations/")) {
         return await handleInvitationsApi(request);
       }

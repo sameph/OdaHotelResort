@@ -48,6 +48,7 @@ export const adminNavItems: readonly AdminNavItem[] = [
   { to: "/admin/invite", label: "Invite" },
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/gallery", label: "Gallery" },
+  { to: "/admin/test-email", label: "Email Test" },
 ];
 
 export const receptionistNavItems: readonly AdminNavItem[] = [

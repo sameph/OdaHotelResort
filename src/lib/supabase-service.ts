@@ -138,6 +138,23 @@ export async function insertBooking(booking: BookingInsert): Promise<BookingRow>
         } catch (err) {
           console.warn("Could not decrement room availability:", err);
         }
+
+        if (fallback.email) {
+          try {
+            const { sendPaymentConfirmationEmail } = await import("./email-service");
+            await sendPaymentConfirmationEmail(
+              fallback.email,
+              fallback.guest || "Guest",
+              fallback.ref,
+              fallback.total || 0,
+              fallback.checkIn || "",
+              fallback.checkOut || "",
+              fallback.room || fallback.roomType || "Standard Room",
+            );
+          } catch (e) {
+            console.warn("Could not send confirmation email:", e);
+          }
+        }
       }
       return retry.data as BookingRow;
     }
@@ -150,6 +167,23 @@ export async function insertBooking(booking: BookingInsert): Promise<BookingRow>
       await decrementRoomAvailability(booking.roomSlug || booking.room, booking.roomType);
     } catch (err) {
       console.warn("Could not decrement room availability:", err);
+    }
+
+    if (booking.email) {
+      try {
+        const { sendPaymentConfirmationEmail } = await import("./email-service");
+        await sendPaymentConfirmationEmail(
+          booking.email,
+          booking.guest || "Guest",
+          booking.ref,
+          booking.total || 0,
+          booking.checkIn || "",
+          booking.checkOut || "",
+          booking.room || booking.roomType || "Standard Room",
+        );
+      } catch (e) {
+        console.warn("Could not send confirmation email:", e);
+      }
     }
   }
 
@@ -761,6 +795,23 @@ export async function updateBookingStatus(id: number, status: string): Promise<B
       );
     } catch (err) {
       console.warn("Failed to decrement room availability on confirmation:", err);
+    }
+
+    if (currentBooking?.email) {
+      try {
+        const { sendPaymentConfirmationEmail } = await import("./email-service");
+        await sendPaymentConfirmationEmail(
+          currentBooking.email,
+          currentBooking.guest || "Guest",
+          currentBooking.ref,
+          currentBooking.total || 0,
+          currentBooking.checkIn || "",
+          currentBooking.checkOut || "",
+          currentBooking.room || currentBooking.roomType || "Standard Room",
+        );
+      } catch (e) {
+        console.warn("Failed to send confirmation email on status update:", e);
+      }
     }
   }
 

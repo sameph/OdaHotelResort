@@ -1,4 +1,30 @@
 import { Resend } from "resend";
+import { render } from "@react-email/render";
+import * as React from "react";
+import BookingConfirmation, {
+  type BookingConfirmationProps,
+} from "@/emails/BookingConfirmation";
+
+export type { BookingConfirmationProps };
+
+/**
+ * Renders the React Email BookingConfirmation component to static HTML.
+ */
+export async function renderBookingConfirmation(
+  props: BookingConfirmationProps,
+): Promise<string> {
+  return await render(React.createElement(BookingConfirmation, props));
+}
+
+export interface SendPaymentConfirmationParams {
+  toEmail: string;
+  guestName: string;
+  txRef: string;
+  amount: number;
+  checkIn: string;
+  checkOut: string;
+  roomName: string;
+}
 
 export async function sendPaymentConfirmationEmail(
   toEmail: string,
@@ -8,11 +34,39 @@ export async function sendPaymentConfirmationEmail(
   checkIn: string,
   checkOut: string,
   roomName: string,
-) {
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  // If running in browser environment, dispatch to server API route
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/send-booking-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toEmail,
+          guestName,
+          txRef,
+          amount,
+          checkIn,
+          checkOut,
+          roomName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send confirmation email");
+      }
+      return { success: true, id: data.id };
+    } catch (err: any) {
+      console.warn("Client email dispatch error:", err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Running on the server:
   const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
   if (!resendApiKey) {
     console.warn("RESEND_API_KEY is not set. Email dispatch bypassed.");
-    return;
+    return { success: false, error: "RESEND_API_KEY is not configured" };
   }
 
   const fromAddress =
@@ -27,43 +81,37 @@ export async function sendPaymentConfirmationEmail(
     "https://odaresortandhotel.com"
   ).replace(/\/$/, "");
 
-  const resend = new Resend(resendApiKey);
-
-  const cancelUrl = `${siteUrl.replace(/\/$/, "")}/api/bookings/cancel?ref=${txRef}`;
-
-  const html = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a3c34;">
-      <h2 style="color: #1a3c34; border-bottom: 2px solid #ceb373; padding-bottom: 10px;">Booking Confirmation</h2>
-      <p>Dear ${guestName},</p>
-      <p>Your payment of <strong>ETB ${amount.toLocaleString()}</strong> has been successfully processed! Your booking is now confirmed.</p>
-      
-      <div style="background-color: #fcf9f2; padding: 20px; border: 1px solid #e2d8c3; border-radius: 4px; margin-top: 20px;">
-        <h3 style="margin-top: 0;">Reservation Details:</h3>
-        <ul style="list-style: none; padding-left: 0;">
-          <li style="margin-bottom: 8px;"><strong>Reference ID:</strong> ${txRef}</li>
-          <li style="margin-bottom: 8px;"><strong>Room:</strong> ${roomName}</li>
-          <li style="margin-bottom: 8px;"><strong>Check-in:</strong> ${checkIn}</li>
-          <li style="margin-bottom: 8px;"><strong>Check-out:</strong> ${checkOut}</li>
-        </ul>
-      </div>
-
-      <p style="margin-top: 30px;">If your plans change, you can easily cancel your booking prior to arrival by clicking the link below:</p>
-      <a href="${cancelUrl}" style="display: inline-block; padding: 10px 15px; background-color: #9f1239; color: #ffffff; text-decoration: none; font-size: 14px; text-transform: uppercase; font-weight: bold; border-radius: 4px;">Cancel Booking</a>
-      
-      <p style="margin-top: 40px; font-size: 12px; color: #666;">We look forward to hosting you at ODA Resort Hotel!</p>
-    </div>
-  `;
+  const cancelUrl = `${siteUrl}/api/bookings/cancel?ref=${txRef}`;
 
   try {
-    await resend.emails.send({
+    const html = await renderBookingConfirmation({
+      guestName,
+      txRef,
+      amount,
+      checkIn,
+      checkOut,
+      roomName,
+      cancelUrl,
+    });
+
+    const resend = new Resend(resendApiKey);
+    const result = await resend.emails.send({
       from: fromAddress,
       to: toEmail,
-      subject: `Your Booking is Confirmed - ${txRef}`,
+      subject: `Your Booking is Confirmed - ${txRef} | ODA Resort`,
       html,
     });
-    console.log(`Confirmation email queued for broadcast to ${toEmail}`);
-  } catch (err) {
-    console.error("Failed to send confirmation email", err);
+
+    if (result.error) {
+      console.error("Resend API error:", result.error);
+      return { success: false, error: result.error.message };
+    }
+
+    console.log(`Confirmation email sent via Resend to ${toEmail} (ID: ${result.data?.id})`);
+    return { success: true, id: result.data?.id };
+  } catch (err: any) {
+    console.error("Failed to send confirmation email:", err);
+    return { success: false, error: err?.message || "Internal sending failure" };
   }
 }
 

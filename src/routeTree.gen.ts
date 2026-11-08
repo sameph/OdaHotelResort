@@ -32,6 +32,7 @@ import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminOffersRouteImport } from './routes/admin.offers'
 import { Route as AdminRoomsRouteImport } from './routes/admin.rooms'
+import { Route as AdminTestEmailRouteImport } from './routes/admin.test-email'
 import { Route as AdminInviteAcceptRouteImport } from './routes/admin.invite.accept'
 
 const IndexRoute = IndexRouteImport.update({
@@ -149,6 +150,11 @@ const AdminRoomsRoute = AdminRoomsRouteImport.update({
   path: '/rooms',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTestEmailRoute = AdminTestEmailRouteImport.update({
+  id: '/test-email',
+  path: '/test-email',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminInviteAcceptRoute = AdminInviteAcceptRouteImport.update({
   id: '/accept',
   path: '/accept',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
+  '/admin/test-email': typeof AdminTestEmailRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
+  '/admin/test-email': typeof AdminTestEmailRoute
   '/admin': typeof AdminIndexRoute
   '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/rooms': typeof AdminRoomsRoute
+  '/admin/test-email': typeof AdminTestEmailRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/invite/accept': typeof AdminInviteAcceptRoute
 }
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
+    | '/admin/test-email'
     | '/admin/'
     | '/admin/invite/accept'
   fileRoutesByTo: FileRoutesByTo
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
+    | '/admin/test-email'
     | '/admin'
     | '/admin/invite/accept'
   id:
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/rooms'
+    | '/admin/test-email'
     | '/admin/'
     | '/admin/invite/accept'
   fileRoutesById: FileRoutesById
@@ -492,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRoomsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/test-email': {
+      id: '/admin/test-email'
+      path: '/test-email'
+      fullPath: '/admin/test-email'
+      preLoaderRoute: typeof AdminTestEmailRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/invite/accept': {
       id: '/admin/invite/accept'
       path: '/accept'
@@ -524,6 +543,7 @@ interface AdminRouteChildren {
   AdminMenuRoute: typeof AdminMenuRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminRoomsRoute: typeof AdminRoomsRoute
+  AdminTestEmailRoute: typeof AdminTestEmailRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -537,6 +557,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMenuRoute: AdminMenuRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminRoomsRoute: AdminRoomsRoute,
+  AdminTestEmailRoute: AdminTestEmailRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
