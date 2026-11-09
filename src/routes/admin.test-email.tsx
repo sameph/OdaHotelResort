@@ -18,7 +18,7 @@ export const Route = createFileRoute("/admin/test-email")({
 });
 
 function TestEmailPage() {
-  const [recipient, setRecipient] = useState("samephrem07@gmail.com");
+  const [recipient, setRecipient] = useState("samuelephrem07@gmail.com");
   const [guestName, setGuestName] = useState("Abebe Kebede");
   const [roomName, setRoomName] = useState("King Mountain View Suite");
   const [txRef, setTxRef] = useState(`ODA-${Math.floor(100000 + Math.random() * 900000)}`);
@@ -215,7 +215,16 @@ function TestEmailPage() {
                   className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-forest/20 focus:border-forest"
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Enter your email address to receive the live test email.
+                  In Resend testing mode, send to your account email (<strong className="text-foreground">samuelephrem07@gmail.com</strong>).
+                  To send to any guest email, verify your domain at{" "}
+                  <a
+                    href="https://resend.com/domains"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-forest underline inline-flex items-center gap-0.5"
+                  >
+                    resend.com/domains <ExternalLink className="h-3 w-3 inline" />
+                  </a>.
                 </p>
               </div>
 
@@ -354,3 +363,4 @@ function TestEmailPage() {
     </div>
   );
 }
+
