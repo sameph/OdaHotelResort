@@ -19,7 +19,7 @@ export interface BookingConfirmationProps {
   checkIn: string;
   checkOut: string;
   roomName: string;
-  cancelUrl: string;
+  cancelUrl?: string;
 }
 
 export const BookingConfirmation = ({
@@ -29,7 +29,6 @@ export const BookingConfirmation = ({
   checkIn,
   checkOut,
   roomName,
-  cancelUrl,
 }: BookingConfirmationProps) => (
   <Html>
     <Head />
@@ -57,8 +56,10 @@ export const BookingConfirmation = ({
           <Text style={styles.cardLabel}>Check‑out:</Text>
           <Text style={styles.cardValue}>{checkOut}</Text>
         </Section>
-        <Section style={{ textAlign: 'center', marginTop: 32 }}>
-          <Link href={cancelUrl} style={styles.cancelBtn}>Cancel Booking</Link>
+        <Section style={styles.noticeBox}>
+          <Text style={styles.noticeText}>
+            Please contact the Oda Hotel team to cancel your booking.
+          </Text>
         </Section>
         <Text style={styles.footer}>We look forward to welcoming you to ODA Resort Hotel!</Text>
       </Container>
@@ -111,19 +112,25 @@ const styles = {
     marginBottom: 12,
     fontWeight: 500 as const,
   },
-  cancelBtn: {
-    backgroundColor: '#9f1239',
-    color: '#ffffff',
-    textDecoration: 'none',
-    padding: '12px 20px',
-    borderRadius: 4,
-    fontSize: 14,
-    fontWeight: 600 as const,
+  noticeBox: {
+    marginTop: 28,
+    padding: '16px 20px',
+    backgroundColor: '#fcf8f0',
+    border: '1px dashed #dcd0b8',
+    borderRadius: 6,
+    textAlign: 'center' as const,
+  },
+  noticeText: {
+    margin: 0,
+    fontSize: 13,
+    lineHeight: '20px',
+    color: '#5a4d3a',
+    fontWeight: 500 as const,
   },
   footer: {
     fontSize: 12,
     color: '#666666',
-    marginTop: 40,
+    marginTop: 32,
     textAlign: 'center' as const,
   },
 };
