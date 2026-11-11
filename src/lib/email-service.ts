@@ -26,6 +26,37 @@ export interface SendPaymentConfirmationParams {
   roomName: string;
 }
 
+/**
+ * Returns formatted sender email, supporting separated name/address in cPanel .env
+ * e.g. MAIL_FROM_ADDRESS=bookings@contact.odaresortandhotel.com
+ *      MAIL_FROM_NAME="ODA Resort and Hotel"
+ * or single EMAIL_FROM="ODA Resort and Hotel <bookings@contact.odaresortandhotel.com>"
+ */
+export function getSenderEmail(): string {
+  const fromName =
+    process.env.MAIL_FROM_NAME ||
+    process.env.EMAIL_FROM_NAME ||
+    "ODA Resort and Hotel";
+
+  const rawAddress =
+    process.env.MAIL_FROM_ADDRESS ||
+    process.env.EMAIL_FROM_ADDRESS ||
+    process.env.EMAIL_FROM ||
+    process.env.SENDER_EMAIL ||
+    process.env.VITE_EMAIL_FROM ||
+    "onboarding@resend.dev";
+
+  // If it already contains angle brackets, use it as is
+  if (rawAddress.includes("<") && rawAddress.includes(">")) {
+    return rawAddress;
+  }
+
+  // Otherwise construct standard RFC format: "Name" <email@domain.com>
+  const cleanName = fromName.replace(/["<>]/g, "").trim();
+  const cleanAddress = rawAddress.replace(/["<>]/g, "").trim();
+  return `"${cleanName}" <${cleanAddress}>`;
+}
+
 export async function sendPaymentConfirmationEmail(
   toEmail: string,
   guestName: string,
@@ -69,11 +100,7 @@ export async function sendPaymentConfirmationEmail(
     return { success: false, error: "RESEND_API_KEY is not configured" };
   }
 
-  const fromAddress =
-    process.env.EMAIL_FROM ||
-    process.env.SENDER_EMAIL ||
-    process.env.VITE_EMAIL_FROM ||
-    "onboarding@resend.dev";
+  const fromAddress = getSenderEmail();
 
   const siteUrl = (
     process.env.SITE_URL ||
@@ -126,11 +153,7 @@ export async function sendInvitationEmail(
     return;
   }
 
-  const fromAddress =
-    process.env.EMAIL_FROM ||
-    process.env.SENDER_EMAIL ||
-    process.env.VITE_EMAIL_FROM ||
-    "onboarding@resend.dev";
+  const fromAddress = getSenderEmail();
 
   const resend = new Resend(resendApiKey);
 

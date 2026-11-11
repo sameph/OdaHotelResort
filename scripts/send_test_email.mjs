@@ -41,11 +41,23 @@ const TO =
   process.env.TO_EMAIL ||
   process.env.EMAIL_TO ||
   "samephrem07@gmail.com";
-const FROM =
+const fromName =
+  process.env.MAIL_FROM_NAME ||
+  process.env.EMAIL_FROM_NAME ||
+  "ODA Resort and Hotel";
+
+const rawAddress =
+  process.env.MAIL_FROM_ADDRESS ||
+  process.env.EMAIL_FROM_ADDRESS ||
   process.env.EMAIL_FROM ||
   process.env.SENDER_EMAIL ||
   process.env.VITE_EMAIL_FROM ||
   `onboarding@resend.dev`;
+
+const FROM =
+  rawAddress.includes("<") && rawAddress.includes(">")
+    ? rawAddress
+    : `"${fromName.replace(/["<>]/g, "").trim()}" <${rawAddress.replace(/["<>]/g, "").trim()}>`;
 const SITE = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://odaresortandhotel.com";
 
 if (!RESEND_API_KEY) {
